@@ -1,0 +1,456 @@
+{
+  "info": {
+    "name": "CazaObjetos · Registro y verificación local",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "description": "Solo desarrollo con Mailpit local. Crea un correo ficticio por ejecución. Ejecútala con Run collection; espera y consulta el correo sin enviarlo a Internet. Los errores 401 y 400 señalados son esperados."
+  },
+  "auth": {
+    "type": "noauth"
+  },
+  "item": [
+    {
+      "name": "01 · Obtener CSRF",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": "{{baseUrl}}/auth/csrf"
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "(function () {",
+              "pm.test(\"HTTP 200\", () => pm.response.to.have.status(200));",
+              "const data = pm.response.json();",
+              "pm.environment.set(\"csrfHeader\", data.headerName);",
+              "pm.environment.set(\"csrfToken\", data.token);",
+              "})();"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "02 · Limpiar sesión anterior",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "{{csrfHeader}}",
+            "value": "{{csrfToken}}"
+          }
+        ],
+        "url": "{{baseUrl}}/auth/logout"
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "(function () {",
+              "pm.test(\"HTTP 204\", () => pm.response.to.have.status(204));",
+              "",
+              "})();"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "03 · Obtener CSRF",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": "{{baseUrl}}/auth/csrf"
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "(function () {",
+              "pm.test(\"HTTP 200\", () => pm.response.to.have.status(200));",
+              "const data = pm.response.json();",
+              "pm.environment.set(\"csrfHeader\", data.headerName);",
+              "pm.environment.set(\"csrfToken\", data.token);",
+              "})();"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "04 · Registrar cuenta nueva",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "{{csrfHeader}}",
+            "value": "{{csrfToken}}"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": "{{baseUrl}}/auth/register",
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"email\": \"{{registrationEmail}}\",\n  \"password\": \"{{registrationPassword}}\",\n  \"displayName\": \"Alumno de prueba\"\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "(function () {",
+              "pm.test(\"HTTP 202\", () => pm.response.to.have.status(202));",
+              "",
+              "})();"
+            ]
+          }
+        },
+        {
+          "listen": "prerequest",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.environment.set(\"registrationEmail\", \"postman.\" + Date.now() + \".\" + Math.floor(Math.random()*10000) + \"@utch.edu.mx\");",
+              "pm.environment.set(\"mailPoll\", \"0\");",
+              "pm.environment.unset(\"verificationToken\");",
+              "pm.environment.unset(\"mailId\");"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "05 · Login antes de verificar: rechazado",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "{{csrfHeader}}",
+            "value": "{{csrfToken}}"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/x-www-form-urlencoded"
+          }
+        ],
+        "url": "{{baseUrl}}/auth/login",
+        "body": {
+          "mode": "urlencoded",
+          "urlencoded": [
+            {
+              "key": "username",
+              "value": "{{registrationEmail}}",
+              "type": "text"
+            },
+            {
+              "key": "password",
+              "value": "{{registrationPassword}}",
+              "type": "text"
+            }
+          ]
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "(function () {",
+              "pm.test(\"HTTP 401\", () => pm.response.to.have.status(401));",
+              "",
+              "})();"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "06 · Buscar correo en buzón local",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": "{{mailpitUrl}}/api/v1/messages"
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "(function () {",
+              "pm.test(\"HTTP 200\", () => pm.response.to.have.status(200));",
+              "const messages = pm.response.json().messages || [];",
+              "const email = pm.environment.get(\"registrationEmail\");",
+              "const found = messages.find(m => (m.To || []).some(to => to.Address === email));",
+              "if (found) {",
+              "  pm.environment.set(\"mailId\", found.ID);",
+              "  pm.test(\"Correo recibido\", () => pm.expect(found).to.exist);",
+              "} else {",
+              "  const attempt = Number(pm.environment.get(\"mailPoll\") || 0) + 1;",
+              "  pm.environment.set(\"mailPoll\", String(attempt));",
+              "  if (attempt < 20) pm.execution.setNextRequest(pm.info.requestName);",
+              "  else {",
+              "    pm.test(\"Correo recibido en 20 segundos\", () => pm.expect(found).to.exist);",
+              "    pm.execution.setNextRequest(null);",
+              "  }",
+              "}",
+              "})();"
+            ]
+          }
+        },
+        {
+          "listen": "prerequest",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "setTimeout(function () {}, 1000);"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "07 · Leer código del correo local",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": "{{mailpitUrl}}/api/v1/message/{{mailId}}"
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "(function () {",
+              "pm.test(\"HTTP 200\", () => pm.response.to.have.status(200));",
+              "const body = pm.response.json().Text || \"\";",
+              "const match = body.match(/(?:^|\\n)([A-Za-z0-9_-]{43})(?:\\r?\\n|$)/);",
+              "pm.test(\"Código en correo\", () => pm.expect(match).not.to.eql(null));",
+              "if (match) pm.environment.set(\"verificationToken\", match[1]);",
+              "})();"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "08 · Verificar correo",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "{{csrfHeader}}",
+            "value": "{{csrfToken}}"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": "{{baseUrl}}/auth/verify-email",
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"token\": \"{{verificationToken}}\"\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "(function () {",
+              "pm.test(\"HTTP 204\", () => pm.response.to.have.status(204));",
+              "",
+              "})();"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "09 · Reutilizar código: rechazado",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "{{csrfHeader}}",
+            "value": "{{csrfToken}}"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": "{{baseUrl}}/auth/verify-email",
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"token\": \"{{verificationToken}}\"\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "(function () {",
+              "pm.test(\"HTTP 400\", () => pm.response.to.have.status(400));",
+              "",
+              "})();"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "10 · Login después de verificar",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "{{csrfHeader}}",
+            "value": "{{csrfToken}}"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/x-www-form-urlencoded"
+          }
+        ],
+        "url": "{{baseUrl}}/auth/login",
+        "body": {
+          "mode": "urlencoded",
+          "urlencoded": [
+            {
+              "key": "username",
+              "value": "{{registrationEmail}}",
+              "type": "text"
+            },
+            {
+              "key": "password",
+              "value": "{{registrationPassword}}",
+              "type": "text"
+            }
+          ]
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "(function () {",
+              "pm.test(\"HTTP 204\", () => pm.response.to.have.status(204));",
+              "",
+              "})();"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "11 · Obtener CSRF",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": "{{baseUrl}}/auth/csrf"
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "(function () {",
+              "pm.test(\"HTTP 200\", () => pm.response.to.have.status(200));",
+              "const data = pm.response.json();",
+              "pm.environment.set(\"csrfHeader\", data.headerName);",
+              "pm.environment.set(\"csrfToken\", data.token);",
+              "})();"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "12 · Consultar perfil verificado",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": "{{baseUrl}}/auth/me"
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "(function () {",
+              "pm.test(\"HTTP 200\", () => pm.response.to.have.status(200));",
+              "const user = pm.response.json();",
+              "pm.test(\"Correo correcto\", () => pm.expect(user.email).to.eql(pm.environment.get(\"registrationEmail\")));",
+              "pm.test(\"Rol sin privilegios administrativos\", () => pm.expect(user.role).to.eql(\"STUDENT\"));",
+              "})();"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "13 · Cerrar sesión",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "{{csrfHeader}}",
+            "value": "{{csrfToken}}"
+          }
+        ],
+        "url": "{{baseUrl}}/auth/logout"
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "(function () {",
+              "pm.test(\"HTTP 204\", () => pm.response.to.have.status(204));",
+              "",
+              "})();"
+            ]
+          }
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,4 @@
+*
+!Dockerfile
+!target/
+!target/cazaobjetos-0.1.0-SNAPSHOT.jar

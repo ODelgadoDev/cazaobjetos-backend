@@ -1,0 +1,562 @@
+{
+  "info": {
+    "name": "CazaObjetos · Fotografías",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "description": "Usa el entorno CazaObjetos Local con devPassword configurado. Crea dos hallazgos y un extravío ficticios; verifica filtros, órdenes y paginación. No elimina registros."
+  },
+  "auth": {
+    "type": "noauth"
+  },
+  "item": [
+    {
+      "name": "01 · Obtener CSRF",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": "{{baseUrl}}/auth/csrf"
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "(function(){",
+              "pm.test(\"HTTP 200\", () => pm.response.to.have.status(200));",
+              "if(pm.response.code === 200) {",
+              "const csrfData=pm.response.json();pm.environment.set(\"csrfHeader\",csrfData.headerName);pm.environment.set(\"csrfToken\",csrfData.token);",
+              "}",
+              "})();"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "02 · Cerrar sesión previa",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "{{csrfHeader}}",
+            "value": "{{csrfToken}}"
+          }
+        ],
+        "url": "{{baseUrl}}/auth/logout"
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "(function(){",
+              "pm.test(\"HTTP 204\", () => pm.response.to.have.status(204));",
+              "if(pm.response.code === 204) {",
+              "",
+              "}",
+              "})();"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "03 · Obtener CSRF",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": "{{baseUrl}}/auth/csrf"
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "(function(){",
+              "pm.test(\"HTTP 200\", () => pm.response.to.have.status(200));",
+              "if(pm.response.code === 200) {",
+              "const csrfData=pm.response.json();pm.environment.set(\"csrfHeader\",csrfData.headerName);pm.environment.set(\"csrfToken\",csrfData.token);",
+              "}",
+              "})();"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "04 · Login alumno demo",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "{{csrfHeader}}",
+            "value": "{{csrfToken}}"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/x-www-form-urlencoded"
+          }
+        ],
+        "url": "{{baseUrl}}/auth/login",
+        "body": {
+          "mode": "urlencoded",
+          "urlencoded": [
+            {
+              "key": "username",
+              "value": "alumno.demo@utch.edu.mx",
+              "type": "text"
+            },
+            {
+              "key": "password",
+              "value": "{{devPassword}}",
+              "type": "text"
+            }
+          ]
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "(function(){",
+              "pm.test(\"HTTP 204\", () => pm.response.to.have.status(204));",
+              "if(pm.response.code === 204) {",
+              "",
+              "}",
+              "})();"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "05 · Obtener CSRF",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": "{{baseUrl}}/auth/csrf"
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "(function(){",
+              "pm.test(\"HTTP 200\", () => pm.response.to.have.status(200));",
+              "if(pm.response.code === 200) {",
+              "const csrfData=pm.response.json();pm.environment.set(\"csrfHeader\",csrfData.headerName);pm.environment.set(\"csrfToken\",csrfData.token);",
+              "}",
+              "})();"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "06 · Publicar found-items",
+      "request": {
+        "method": "POST",
+        "url": "{{baseUrl}}/found-items",
+        "header": [
+          {
+            "key": "{{csrfHeader}}",
+            "value": "{{csrfToken}}"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\"title\": \"Prueba de fotograf\\u00edas\", \"description\": \"Publicaci\\u00f3n para probar im\\u00e1genes\", \"category\": \"OTHER\", \"location\": \"Edificio I\", \"occurredOn\": \"2026-10-01\"}"
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "(function(){",
+              "pm.test(\"HTTP 201\",()=>pm.response.to.have.status(201));",
+              "if(pm.response.code===201) pm.environment.set(\"photoFoundId\",pm.response.json().id);",
+              "})();"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "07 · Subir PNG",
+      "request": {
+        "method": "POST",
+        "url": "{{baseUrl}}/found-items/{{photoFoundId}}/photos",
+        "header": [
+          {
+            "key": "{{csrfHeader}}",
+            "value": "{{csrfToken}}"
+          }
+        ],
+        "body": {
+          "mode": "formdata",
+          "formdata": [
+            {
+              "key": "file",
+              "type": "file",
+              "src": "fixtures/photo.png"
+            }
+          ]
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "(function(){",
+              "pm.test(\"HTTP 201\",()=>pm.response.to.have.status(201));",
+              "if(pm.response.code===201) pm.environment.set(\"photoId\",pm.response.json().id);",
+              "})();"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "08 · Listar fotos",
+      "request": {
+        "method": "GET",
+        "url": "{{baseUrl}}/found-items/{{photoFoundId}}/photos",
+        "header": []
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "(function(){",
+              "pm.test(\"HTTP 200\",()=>pm.response.to.have.status(200));",
+              "pm.test(\"Una foto\",()=>pm.expect(pm.response.json().length).to.eql(1));",
+              "})();"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "09 · Consultar imagen",
+      "request": {
+        "method": "GET",
+        "url": "{{baseUrl}}/found-items/{{photoFoundId}}/photos/{{photoId}}",
+        "header": []
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "(function(){",
+              "pm.test(\"HTTP 200\",()=>pm.response.to.have.status(200));",
+              "pm.test(\"PNG\",()=>pm.expect(pm.response.headers.get(\"Content-Type\")).to.include(\"image/png\"));",
+              "})();"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "10 · Eliminar foto",
+      "request": {
+        "method": "DELETE",
+        "url": "{{baseUrl}}/found-items/{{photoFoundId}}/photos/{{photoId}}",
+        "header": [
+          {
+            "key": "{{csrfHeader}}",
+            "value": "{{csrfToken}}"
+          }
+        ]
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "(function(){",
+              "pm.test(\"HTTP 204\",()=>pm.response.to.have.status(204));",
+              "",
+              "})();"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "11 · Foto eliminada",
+      "request": {
+        "method": "GET",
+        "url": "{{baseUrl}}/found-items/{{photoFoundId}}/photos/{{photoId}}",
+        "header": []
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "(function(){",
+              "pm.test(\"HTTP 404\",()=>pm.response.to.have.status(404));",
+              "",
+              "})();"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "12 · Lista vacía",
+      "request": {
+        "method": "GET",
+        "url": "{{baseUrl}}/found-items/{{photoFoundId}}/photos",
+        "header": []
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "(function(){",
+              "pm.test(\"HTTP 200\",()=>pm.response.to.have.status(200));",
+              "pm.test(\"Sin fotos\",()=>pm.expect(pm.response.json()).to.eql([]));",
+              "})();"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "13 · Publicar lost-reports",
+      "request": {
+        "method": "POST",
+        "url": "{{baseUrl}}/lost-reports",
+        "header": [
+          {
+            "key": "{{csrfHeader}}",
+            "value": "{{csrfToken}}"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\"title\": \"Prueba de fotograf\\u00edas\", \"description\": \"Publicaci\\u00f3n para probar im\\u00e1genes\", \"category\": \"OTHER\", \"location\": \"Edificio I\", \"occurredOn\": \"2026-10-01\"}"
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "(function(){",
+              "pm.test(\"HTTP 201\",()=>pm.response.to.have.status(201));",
+              "if(pm.response.code===201) pm.environment.set(\"photoLostId\",pm.response.json().id);",
+              "})();"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "14 · Subir PNG",
+      "request": {
+        "method": "POST",
+        "url": "{{baseUrl}}/lost-reports/{{photoLostId}}/photos",
+        "header": [
+          {
+            "key": "{{csrfHeader}}",
+            "value": "{{csrfToken}}"
+          }
+        ],
+        "body": {
+          "mode": "formdata",
+          "formdata": [
+            {
+              "key": "file",
+              "type": "file",
+              "src": "fixtures/photo.png"
+            }
+          ]
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "(function(){",
+              "pm.test(\"HTTP 201\",()=>pm.response.to.have.status(201));",
+              "if(pm.response.code===201) pm.environment.set(\"photoId\",pm.response.json().id);",
+              "})();"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "15 · Listar fotos",
+      "request": {
+        "method": "GET",
+        "url": "{{baseUrl}}/lost-reports/{{photoLostId}}/photos",
+        "header": []
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "(function(){",
+              "pm.test(\"HTTP 200\",()=>pm.response.to.have.status(200));",
+              "pm.test(\"Una foto\",()=>pm.expect(pm.response.json().length).to.eql(1));",
+              "})();"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "16 · Consultar imagen",
+      "request": {
+        "method": "GET",
+        "url": "{{baseUrl}}/lost-reports/{{photoLostId}}/photos/{{photoId}}",
+        "header": []
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "(function(){",
+              "pm.test(\"HTTP 200\",()=>pm.response.to.have.status(200));",
+              "pm.test(\"PNG\",()=>pm.expect(pm.response.headers.get(\"Content-Type\")).to.include(\"image/png\"));",
+              "})();"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "17 · Eliminar foto",
+      "request": {
+        "method": "DELETE",
+        "url": "{{baseUrl}}/lost-reports/{{photoLostId}}/photos/{{photoId}}",
+        "header": [
+          {
+            "key": "{{csrfHeader}}",
+            "value": "{{csrfToken}}"
+          }
+        ]
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "(function(){",
+              "pm.test(\"HTTP 204\",()=>pm.response.to.have.status(204));",
+              "",
+              "})();"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "18 · Foto eliminada",
+      "request": {
+        "method": "GET",
+        "url": "{{baseUrl}}/lost-reports/{{photoLostId}}/photos/{{photoId}}",
+        "header": []
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "(function(){",
+              "pm.test(\"HTTP 404\",()=>pm.response.to.have.status(404));",
+              "",
+              "})();"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "19 · Lista vacía",
+      "request": {
+        "method": "GET",
+        "url": "{{baseUrl}}/lost-reports/{{photoLostId}}/photos",
+        "header": []
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "(function(){",
+              "pm.test(\"HTTP 200\",()=>pm.response.to.have.status(200));",
+              "pm.test(\"Sin fotos\",()=>pm.expect(pm.response.json()).to.eql([]));",
+              "})();"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "20 · Cerrar sesión",
+      "request": {
+        "method": "POST",
+        "url": "{{baseUrl}}/auth/logout",
+        "header": [
+          {
+            "key": "{{csrfHeader}}",
+            "value": "{{csrfToken}}"
+          }
+        ]
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "(function(){",
+              "pm.test(\"HTTP 204\",()=>pm.response.to.have.status(204));",
+              "",
+              "})();"
+            ]
+          }
+        }
+      ]
+    }
+  ]
+}

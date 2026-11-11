@@ -1,0 +1,669 @@
+{
+  "info": {
+    "name": "CazaObjetos · Módulo 1 Catálogo",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "description": "Usa el entorno CazaObjetos Local con devPassword configurado. Crea dos hallazgos y un extravío ficticios; verifica filtros, órdenes y paginación. No elimina registros."
+  },
+  "auth": {
+    "type": "noauth"
+  },
+  "item": [
+    {
+      "name": "01 · Obtener CSRF",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": "{{baseUrl}}/auth/csrf"
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "(function(){",
+              "pm.test(\"HTTP 200\", () => pm.response.to.have.status(200));",
+              "if(pm.response.code === 200) {",
+              "const csrfData=pm.response.json();pm.environment.set(\"csrfHeader\",csrfData.headerName);pm.environment.set(\"csrfToken\",csrfData.token);",
+              "}",
+              "})();"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "02 · Cerrar sesión previa",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "{{csrfHeader}}",
+            "value": "{{csrfToken}}"
+          }
+        ],
+        "url": "{{baseUrl}}/auth/logout"
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "(function(){",
+              "pm.test(\"HTTP 204\", () => pm.response.to.have.status(204));",
+              "if(pm.response.code === 204) {",
+              "",
+              "}",
+              "})();"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "03 · Obtener CSRF",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": "{{baseUrl}}/auth/csrf"
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "(function(){",
+              "pm.test(\"HTTP 200\", () => pm.response.to.have.status(200));",
+              "if(pm.response.code === 200) {",
+              "const csrfData=pm.response.json();pm.environment.set(\"csrfHeader\",csrfData.headerName);pm.environment.set(\"csrfToken\",csrfData.token);",
+              "}",
+              "})();"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "04 · Login alumno demo",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "{{csrfHeader}}",
+            "value": "{{csrfToken}}"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/x-www-form-urlencoded"
+          }
+        ],
+        "url": "{{baseUrl}}/auth/login",
+        "body": {
+          "mode": "urlencoded",
+          "urlencoded": [
+            {
+              "key": "username",
+              "value": "alumno.demo@utch.edu.mx",
+              "type": "text"
+            },
+            {
+              "key": "password",
+              "value": "{{devPassword}}",
+              "type": "text"
+            }
+          ]
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "(function(){",
+              "pm.test(\"HTTP 204\", () => pm.response.to.have.status(204));",
+              "if(pm.response.code === 204) {",
+              "",
+              "}",
+              "})();"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "05 · Obtener CSRF",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": "{{baseUrl}}/auth/csrf"
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "(function(){",
+              "pm.test(\"HTTP 200\", () => pm.response.to.have.status(200));",
+              "if(pm.response.code === 200) {",
+              "const csrfData=pm.response.json();pm.environment.set(\"csrfHeader\",csrfData.headerName);pm.environment.set(\"csrfToken\",csrfData.token);",
+              "}",
+              "})();"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "06 · Publicar mochila para prueba",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "{{csrfHeader}}",
+            "value": "{{csrfToken}}"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": "{{baseUrl}}/found-items",
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"title\": \"Mochila {{catalogTag}}\",\n  \"description\": \"Con cierre gris\",\n  \"category\": \"CLOTHING\",\n  \"location\": \"Edificio I, salón 3\",\n  \"occurredOn\": \"2026-10-01\"\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "(function(){",
+              "pm.test(\"HTTP 201\", () => pm.response.to.have.status(201));",
+              "if(pm.response.code===201) pm.environment.set(\"catalogFoundOne\",pm.response.json().id);",
+              "if(pm.response.code === 201) {",
+              "",
+              "}",
+              "})();"
+            ]
+          }
+        },
+        {
+          "listen": "prerequest",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.environment.set(\"catalogTag\",\"catalog\"+Date.now());"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "07 · Publicar llaves para prueba",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "{{csrfHeader}}",
+            "value": "{{csrfToken}}"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": "{{baseUrl}}/found-items",
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"title\": \"Llaves {{catalogTag}}\",\n  \"description\": \"Llavero rojo\",\n  \"category\": \"KEYS\",\n  \"location\": \"Laboratorio I\",\n  \"occurredOn\": \"2026-10-02\"\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "(function(){",
+              "pm.test(\"HTTP 201\", () => pm.response.to.have.status(201));",
+              "if(pm.response.code===201) pm.environment.set(\"catalogFoundTwo\",pm.response.json().id);",
+              "if(pm.response.code === 201) {",
+              "",
+              "}",
+              "})();"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "08 · Mochila en oficina",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "{{csrfHeader}}",
+            "value": "{{csrfToken}}"
+          }
+        ],
+        "url": "{{baseUrl}}/found-items/{{catalogFoundOne}}/office"
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "(function(){",
+              "pm.test(\"HTTP 204\", () => pm.response.to.have.status(204));",
+              "if(pm.response.code === 204) {",
+              "",
+              "}",
+              "})();"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "09 · Buscar ambos hallazgos",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": "{{baseUrl}}/found-items?q={{catalogTag}}"
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "(function(){",
+              "pm.test(\"HTTP 200\", () => pm.response.to.have.status(200));",
+              "if(pm.response.code === 200) {",
+              "const page=pm.response.json();pm.test(\"Total filtrado\",()=>pm.expect(page.total).to.eql(2));pm.test(\"Dos resultados\",()=>pm.expect(page.items.length).to.eql(2));",
+              "}",
+              "})();"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "10 · Combinar categoría, lugar, estado, resguardo y fechas",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": "{{baseUrl}}/found-items?q={{catalogTag}}&category=CLOTHING&location=Edificio&status=AVAILABLE&custody=OFFICE&dateFrom=2026-10-01&dateTo=2026-10-01"
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "(function(){",
+              "pm.test(\"HTTP 200\", () => pm.response.to.have.status(200));",
+              "if(pm.response.code === 200) {",
+              "const page=pm.response.json();pm.test(\"Una mochila\",()=>{pm.expect(page.total).to.eql(1);pm.expect(page.items[0].id).to.eql(pm.environment.get(\"catalogFoundOne\"));});",
+              "}",
+              "})();"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "11 · Primera página - recientes",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": "{{baseUrl}}/found-items?q={{catalogTag}}&page=0&pageSize=1&sort=RECENT"
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "(function(){",
+              "pm.test(\"HTTP 200\", () => pm.response.to.have.status(200));",
+              "if(pm.response.code === 200) {",
+              "const page=pm.response.json();pm.test(\"Página y total\",()=>{pm.expect(page.total).to.eql(2);pm.expect(page.totalPages).to.eql(2);pm.expect(page.hasNext).to.eql(true);pm.expect(page.items[0].id).to.eql(pm.environment.get(\"catalogFoundTwo\"));});",
+              "}",
+              "})();"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "12 · Segunda página",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": "{{baseUrl}}/found-items?q={{catalogTag}}&page=1&pageSize=1&sort=RECENT"
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "(function(){",
+              "pm.test(\"HTTP 200\", () => pm.response.to.have.status(200));",
+              "if(pm.response.code === 200) {",
+              "const page=pm.response.json();pm.test(\"Última página\",()=>{pm.expect(page.hasNext).to.eql(false);pm.expect(page.items[0].id).to.eql(pm.environment.get(\"catalogFoundOne\"));});",
+              "}",
+              "})();"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "13 · Orden antiguos",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": "{{baseUrl}}/found-items?q={{catalogTag}}&sort=OLDEST"
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "(function(){",
+              "pm.test(\"HTTP 200\", () => pm.response.to.have.status(200));",
+              "if(pm.response.code === 200) {",
+              "pm.test(\"Mochila primero\",()=>pm.expect(pm.response.json().items[0].id).to.eql(pm.environment.get(\"catalogFoundOne\")));",
+              "}",
+              "})();"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "14 · Orden título A-Z",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": "{{baseUrl}}/found-items?q={{catalogTag}}&sort=TITLE_ASC"
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "(function(){",
+              "pm.test(\"HTTP 200\", () => pm.response.to.have.status(200));",
+              "if(pm.response.code === 200) {",
+              "pm.test(\"Llaves primero\",()=>pm.expect(pm.response.json().items[0].id).to.eql(pm.environment.get(\"catalogFoundTwo\")));",
+              "}",
+              "})();"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "15 · Orden título Z-A",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": "{{baseUrl}}/found-items?q={{catalogTag}}&sort=TITLE_DESC"
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "(function(){",
+              "pm.test(\"HTTP 200\", () => pm.response.to.have.status(200));",
+              "if(pm.response.code === 200) {",
+              "pm.test(\"Mochila primero\",()=>pm.expect(pm.response.json().items[0].id).to.eql(pm.environment.get(\"catalogFoundOne\")));",
+              "}",
+              "})();"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "16 · Sin coincidencias",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": "{{baseUrl}}/found-items?q=noexiste{{catalogTag}}"
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "(function(){",
+              "pm.test(\"HTTP 200\", () => pm.response.to.have.status(200));",
+              "if(pm.response.code === 200) {",
+              "const page=pm.response.json();pm.test(\"Página vacía\",()=>{pm.expect(page.total).to.eql(0);pm.expect(page.items).to.eql([]);});",
+              "}",
+              "})();"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "17 · Tamaño inválido",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": "{{baseUrl}}/found-items?pageSize=101"
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "(function(){",
+              "pm.test(\"HTTP 400\", () => pm.response.to.have.status(400));",
+              "if(pm.response.code === 400) {",
+              "",
+              "}",
+              "})();"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "18 · Rango invertido",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": "{{baseUrl}}/found-items?dateFrom=2026-10-02&dateTo=2026-10-01"
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "(function(){",
+              "pm.test(\"HTTP 400\", () => pm.response.to.have.status(400));",
+              "if(pm.response.code === 400) {",
+              "",
+              "}",
+              "})();"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "19 · Categoría desconocida",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": "{{baseUrl}}/found-items?category=INVALID"
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "(function(){",
+              "pm.test(\"HTTP 400\", () => pm.response.to.have.status(400));",
+              "if(pm.response.code === 400) {",
+              "",
+              "}",
+              "})();"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "20 · Publicar extravío para prueba",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "{{csrfHeader}}",
+            "value": "{{csrfToken}}"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": "{{baseUrl}}/lost-reports",
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"title\": \"Extravío {{catalogTag}}\",\n  \"description\": \"Mouse negro\",\n  \"category\": \"ELECTRONICS\",\n  \"location\": \"Laboratorio I\",\n  \"occurredOn\": \"2026-10-01\"\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "(function(){",
+              "pm.test(\"HTTP 201\", () => pm.response.to.have.status(201));",
+              "if(pm.response.code===201) pm.environment.set(\"catalogLost\",pm.response.json().id);",
+              "if(pm.response.code === 201) {",
+              "",
+              "}",
+              "})();"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "21 · Buscar extravíos activos",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": "{{baseUrl}}/lost-reports?q={{catalogTag}}&category=ELECTRONICS&status=ACTIVE&location=Laboratorio&pageSize=5"
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "(function(){",
+              "pm.test(\"HTTP 200\", () => pm.response.to.have.status(200));",
+              "if(pm.response.code === 200) {",
+              "const page=pm.response.json();pm.test(\"Extravío encontrado\",()=>{pm.expect(page.total).to.eql(1);pm.expect(page.items[0].id).to.eql(pm.environment.get(\"catalogLost\"));});",
+              "}",
+              "})();"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "22 · Resguardo no aplica a extravíos",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": "{{baseUrl}}/lost-reports?custody=OFFICE"
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "(function(){",
+              "pm.test(\"HTTP 400\", () => pm.response.to.have.status(400));",
+              "if(pm.response.code === 400) {",
+              "",
+              "}",
+              "})();"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "23 · Cerrar sesión",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "{{csrfHeader}}",
+            "value": "{{csrfToken}}"
+          }
+        ],
+        "url": "{{baseUrl}}/auth/logout"
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "(function(){",
+              "pm.test(\"HTTP 204\", () => pm.response.to.have.status(204));",
+              "if(pm.response.code === 204) {",
+              "",
+              "}",
+              "})();"
+            ]
+          }
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,3489 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "CazaObjetos UTCH API",
+    "version": "0.1.0",
+    "description": "MVP edificio I. Cookie de sesión + CSRF. Nunca usar Bearer. page inicia en 0. Ver docs/integration.md para permisos, reintentos y despliegue."
+  },
+  "servers": [
+    {
+      "url": "/api/v1"
+    }
+  ],
+  "security": [
+    {
+      "sessionCookie": []
+    }
+  ],
+  "paths": {
+    "/found-items": {
+      "get": {
+        "summary": "Catálogo general sin retirados",
+        "operationId": "get_found_items",
+        "responses": {
+          "200": {
+            "description": "Operación correcta",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PageFoundItemResponseDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Entrada inválida"
+          },
+          "401": {
+            "description": "Sesión requerida o revocada"
+          },
+          "403": {
+            "description": "Sin permiso o CSRF inválido"
+          },
+          "404": {
+            "description": "Recurso inexistente o no visible"
+          },
+          "409": {
+            "description": "Estado incompatible o clave reutilizada con otros datos"
+          },
+          "429": {
+            "description": "Límite de intentos; Retry-After: 60"
+          }
+        },
+        "parameters": [
+          {
+            "name": "page",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 10000,
+              "default": 0
+            }
+          },
+          {
+            "name": "pageSize",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 100,
+              "default": 20
+            }
+          },
+          {
+            "name": "q",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "maxLength": 200
+            }
+          },
+          {
+            "name": "location",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "maxLength": 200
+            }
+          },
+          {
+            "name": "category",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "$ref": "#/components/schemas/Category"
+            }
+          },
+          {
+            "name": "status",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "$ref": "#/components/schemas/FoundStatus"
+            }
+          },
+          {
+            "name": "dateFrom",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "format": "date"
+            }
+          },
+          {
+            "name": "dateTo",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "format": "date"
+            }
+          },
+          {
+            "name": "sort",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "allOf": [
+                {
+                  "$ref": "#/components/schemas/CatalogSort"
+                }
+              ],
+              "default": "RECENT"
+            }
+          },
+          {
+            "name": "custody",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "$ref": "#/components/schemas/CustodyStatus"
+            }
+          }
+        ]
+      },
+      "post": {
+        "summary": "Crear publicación",
+        "operationId": "post_found_items",
+        "responses": {
+          "201": {
+            "description": "Operación correcta",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/IdResponseDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Entrada inválida"
+          },
+          "401": {
+            "description": "Sesión requerida o revocada"
+          },
+          "403": {
+            "description": "Sin permiso o CSRF inválido"
+          },
+          "404": {
+            "description": "Recurso inexistente o no visible"
+          },
+          "409": {
+            "description": "Estado incompatible o clave reutilizada con otros datos"
+          },
+          "429": {
+            "description": "Límite de intentos; Retry-After: 60"
+          }
+        },
+        "parameters": [
+          {
+            "name": "X-CSRF-TOKEN",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "Idempotency-Key",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "pattern": "^[A-Za-z0-9._:-]{8,100}$",
+              "description": "Misma clave, usuario, ruta y datos: mismo ID. Datos diferentes: 409."
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ReportRequestDto"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/found-items/mine": {
+      "get": {
+        "summary": "Catálogo personal",
+        "operationId": "get_found_items_mine",
+        "responses": {
+          "200": {
+            "description": "Operación correcta",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PageFoundItemResponseDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Entrada inválida"
+          },
+          "401": {
+            "description": "Sesión requerida o revocada"
+          },
+          "403": {
+            "description": "Sin permiso o CSRF inválido"
+          },
+          "404": {
+            "description": "Recurso inexistente o no visible"
+          },
+          "409": {
+            "description": "Estado incompatible o clave reutilizada con otros datos"
+          },
+          "429": {
+            "description": "Límite de intentos; Retry-After: 60"
+          }
+        },
+        "parameters": [
+          {
+            "name": "page",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 10000,
+              "default": 0
+            }
+          },
+          {
+            "name": "pageSize",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 100,
+              "default": 20
+            }
+          },
+          {
+            "name": "q",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "maxLength": 200
+            }
+          },
+          {
+            "name": "location",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "maxLength": 200
+            }
+          },
+          {
+            "name": "category",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "$ref": "#/components/schemas/Category"
+            }
+          },
+          {
+            "name": "status",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "$ref": "#/components/schemas/FoundStatus"
+            }
+          },
+          {
+            "name": "dateFrom",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "format": "date"
+            }
+          },
+          {
+            "name": "dateTo",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "format": "date"
+            }
+          },
+          {
+            "name": "sort",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "allOf": [
+                {
+                  "$ref": "#/components/schemas/CatalogSort"
+                }
+              ],
+              "default": "RECENT"
+            }
+          },
+          {
+            "name": "custody",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "$ref": "#/components/schemas/CustodyStatus"
+            }
+          }
+        ]
+      }
+    },
+    "/found-items/{id}": {
+      "get": {
+        "summary": "Detalle visible",
+        "operationId": "get_found_items_id",
+        "responses": {
+          "200": {
+            "description": "Operación correcta",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FoundItemResponseDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Entrada inválida"
+          },
+          "401": {
+            "description": "Sesión requerida o revocada"
+          },
+          "403": {
+            "description": "Sin permiso o CSRF inválido"
+          },
+          "404": {
+            "description": "Recurso inexistente o no visible"
+          },
+          "409": {
+            "description": "Estado incompatible o clave reutilizada con otros datos"
+          },
+          "429": {
+            "description": "Límite de intentos; Retry-After: 60"
+          }
+        },
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ]
+      },
+      "put": {
+        "summary": "Editar publicación",
+        "operationId": "put_found_items_id",
+        "responses": {
+          "204": {
+            "description": "Operación correcta"
+          },
+          "400": {
+            "description": "Entrada inválida"
+          },
+          "401": {
+            "description": "Sesión requerida o revocada"
+          },
+          "403": {
+            "description": "Sin permiso o CSRF inválido"
+          },
+          "404": {
+            "description": "Recurso inexistente o no visible"
+          },
+          "409": {
+            "description": "Estado incompatible o clave reutilizada con otros datos"
+          },
+          "429": {
+            "description": "Límite de intentos; Retry-After: 60"
+          }
+        },
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "X-CSRF-TOKEN",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ReportRequestDto"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/found-items/{id}/withdraw": {
+      "post": {
+        "summary": "Retirar conservando historial",
+        "operationId": "post_found_items_id_withdraw",
+        "responses": {
+          "204": {
+            "description": "Operación correcta"
+          },
+          "400": {
+            "description": "Entrada inválida"
+          },
+          "401": {
+            "description": "Sesión requerida o revocada"
+          },
+          "403": {
+            "description": "Sin permiso o CSRF inválido"
+          },
+          "404": {
+            "description": "Recurso inexistente o no visible"
+          },
+          "409": {
+            "description": "Estado incompatible o clave reutilizada con otros datos"
+          },
+          "429": {
+            "description": "Límite de intentos; Retry-After: 60"
+          }
+        },
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "X-CSRF-TOKEN",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ]
+      }
+    },
+    "/found-items/{id}/office": {
+      "post": {
+        "summary": "Registrar resguardo en oficina",
+        "operationId": "post_found_items_id_office",
+        "responses": {
+          "204": {
+            "description": "Operación correcta"
+          },
+          "400": {
+            "description": "Entrada inválida"
+          },
+          "401": {
+            "description": "Sesión requerida o revocada"
+          },
+          "403": {
+            "description": "Sin permiso o CSRF inválido"
+          },
+          "404": {
+            "description": "Recurso inexistente o no visible"
+          },
+          "409": {
+            "description": "Estado incompatible o clave reutilizada con otros datos"
+          },
+          "429": {
+            "description": "Límite de intentos; Retry-After: 60"
+          }
+        },
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "X-CSRF-TOKEN",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ]
+      }
+    },
+    "/found-items/{id}/delegate": {
+      "post": {
+        "summary": "Delegar responsable",
+        "operationId": "post_found_items_id_delegate",
+        "responses": {
+          "204": {
+            "description": "Operación correcta"
+          },
+          "400": {
+            "description": "Entrada inválida"
+          },
+          "401": {
+            "description": "Sesión requerida o revocada"
+          },
+          "403": {
+            "description": "Sin permiso o CSRF inválido"
+          },
+          "404": {
+            "description": "Recurso inexistente o no visible"
+          },
+          "409": {
+            "description": "Estado incompatible o clave reutilizada con otros datos"
+          },
+          "429": {
+            "description": "Límite de intentos; Retry-After: 60"
+          }
+        },
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "X-CSRF-TOKEN",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DelegateRequestDto"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/found-items/{id}/claims": {
+      "post": {
+        "summary": "Solicitar reclamo",
+        "operationId": "post_found_items_id_claims",
+        "responses": {
+          "201": {
+            "description": "Operación correcta",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/IdResponseDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Entrada inválida"
+          },
+          "401": {
+            "description": "Sesión requerida o revocada"
+          },
+          "403": {
+            "description": "Sin permiso o CSRF inválido"
+          },
+          "404": {
+            "description": "Recurso inexistente o no visible"
+          },
+          "409": {
+            "description": "Estado incompatible o clave reutilizada con otros datos"
+          },
+          "429": {
+            "description": "Límite de intentos; Retry-After: 60"
+          }
+        },
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "X-CSRF-TOKEN",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "Idempotency-Key",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "pattern": "^[A-Za-z0-9._:-]{8,100}$",
+              "description": "Misma clave, usuario, ruta y datos: mismo ID. Datos diferentes: 409."
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ClaimRequestDto"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/found-items/{parent}/photos": {
+      "get": {
+        "summary": "Metadatos de fotos",
+        "operationId": "get_found_items_parent_photos",
+        "responses": {
+          "200": {
+            "description": "Operación correcta",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/PhotoResponseDto"
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Entrada inválida"
+          },
+          "401": {
+            "description": "Sesión requerida o revocada"
+          },
+          "403": {
+            "description": "Sin permiso o CSRF inválido"
+          },
+          "404": {
+            "description": "Recurso inexistente o no visible"
+          },
+          "409": {
+            "description": "Estado incompatible o clave reutilizada con otros datos"
+          },
+          "429": {
+            "description": "Límite de intentos; Retry-After: 60"
+          }
+        },
+        "parameters": [
+          {
+            "name": "parent",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ]
+      },
+      "post": {
+        "summary": "Subir JPEG/PNG: máximo 3 fotos, 5 MiB cada una",
+        "operationId": "post_found_items_parent_photos",
+        "responses": {
+          "201": {
+            "description": "Operación correcta",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PhotoResponseDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Entrada inválida"
+          },
+          "401": {
+            "description": "Sesión requerida o revocada"
+          },
+          "403": {
+            "description": "Sin permiso o CSRF inválido"
+          },
+          "404": {
+            "description": "Recurso inexistente o no visible"
+          },
+          "409": {
+            "description": "Estado incompatible o clave reutilizada con otros datos"
+          },
+          "429": {
+            "description": "Límite de intentos; Retry-After: 60"
+          },
+          "413": {
+            "description": "Más de 5 MiB por archivo / 6 MiB por petición"
+          },
+          "415": {
+            "description": "Solo JPEG/PNG"
+          }
+        },
+        "parameters": [
+          {
+            "name": "parent",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "X-CSRF-TOKEN",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "file"
+                ],
+                "properties": {
+                  "file": {
+                    "type": "string",
+                    "format": "binary"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/found-items/{parent}/photos/{id}": {
+      "get": {
+        "summary": "Contenido de imagen",
+        "operationId": "get_found_items_parent_photos_id",
+        "responses": {
+          "200": {
+            "description": "Operación correcta",
+            "content": {
+              "image/png": {
+                "schema": {
+                  "type": "string",
+                  "format": "binary"
+                }
+              },
+              "image/jpeg": {
+                "schema": {
+                  "type": "string",
+                  "format": "binary"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Entrada inválida"
+          },
+          "401": {
+            "description": "Sesión requerida o revocada"
+          },
+          "403": {
+            "description": "Sin permiso o CSRF inválido"
+          },
+          "404": {
+            "description": "Recurso inexistente o no visible"
+          },
+          "409": {
+            "description": "Estado incompatible o clave reutilizada con otros datos"
+          },
+          "429": {
+            "description": "Límite de intentos; Retry-After: 60"
+          }
+        },
+        "parameters": [
+          {
+            "name": "parent",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ]
+      },
+      "delete": {
+        "summary": "Eliminar foto",
+        "operationId": "delete_found_items_parent_photos_id",
+        "responses": {
+          "204": {
+            "description": "Operación correcta"
+          },
+          "400": {
+            "description": "Entrada inválida"
+          },
+          "401": {
+            "description": "Sesión requerida o revocada"
+          },
+          "403": {
+            "description": "Sin permiso o CSRF inválido"
+          },
+          "404": {
+            "description": "Recurso inexistente o no visible"
+          },
+          "409": {
+            "description": "Estado incompatible o clave reutilizada con otros datos"
+          },
+          "429": {
+            "description": "Límite de intentos; Retry-After: 60"
+          }
+        },
+        "parameters": [
+          {
+            "name": "parent",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "X-CSRF-TOKEN",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ]
+      }
+    },
+    "/lost-reports": {
+      "get": {
+        "summary": "Catálogo general sin retirados",
+        "operationId": "get_lost_reports",
+        "responses": {
+          "200": {
+            "description": "Operación correcta",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PageLostReportResponseDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Entrada inválida"
+          },
+          "401": {
+            "description": "Sesión requerida o revocada"
+          },
+          "403": {
+            "description": "Sin permiso o CSRF inválido"
+          },
+          "404": {
+            "description": "Recurso inexistente o no visible"
+          },
+          "409": {
+            "description": "Estado incompatible o clave reutilizada con otros datos"
+          },
+          "429": {
+            "description": "Límite de intentos; Retry-After: 60"
+          }
+        },
+        "parameters": [
+          {
+            "name": "page",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 10000,
+              "default": 0
+            }
+          },
+          {
+            "name": "pageSize",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 100,
+              "default": 20
+            }
+          },
+          {
+            "name": "q",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "maxLength": 200
+            }
+          },
+          {
+            "name": "location",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "maxLength": 200
+            }
+          },
+          {
+            "name": "category",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "$ref": "#/components/schemas/Category"
+            }
+          },
+          {
+            "name": "status",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "$ref": "#/components/schemas/LostStatus"
+            }
+          },
+          {
+            "name": "dateFrom",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "format": "date"
+            }
+          },
+          {
+            "name": "dateTo",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "format": "date"
+            }
+          },
+          {
+            "name": "sort",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "allOf": [
+                {
+                  "$ref": "#/components/schemas/CatalogSort"
+                }
+              ],
+              "default": "RECENT"
+            }
+          }
+        ]
+      },
+      "post": {
+        "summary": "Crear publicación",
+        "operationId": "post_lost_reports",
+        "responses": {
+          "201": {
+            "description": "Operación correcta",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/IdResponseDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Entrada inválida"
+          },
+          "401": {
+            "description": "Sesión requerida o revocada"
+          },
+          "403": {
+            "description": "Sin permiso o CSRF inválido"
+          },
+          "404": {
+            "description": "Recurso inexistente o no visible"
+          },
+          "409": {
+            "description": "Estado incompatible o clave reutilizada con otros datos"
+          },
+          "429": {
+            "description": "Límite de intentos; Retry-After: 60"
+          }
+        },
+        "parameters": [
+          {
+            "name": "X-CSRF-TOKEN",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "Idempotency-Key",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "pattern": "^[A-Za-z0-9._:-]{8,100}$",
+              "description": "Misma clave, usuario, ruta y datos: mismo ID. Datos diferentes: 409."
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ReportRequestDto"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/lost-reports/mine": {
+      "get": {
+        "summary": "Catálogo personal",
+        "operationId": "get_lost_reports_mine",
+        "responses": {
+          "200": {
+            "description": "Operación correcta",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PageLostReportResponseDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Entrada inválida"
+          },
+          "401": {
+            "description": "Sesión requerida o revocada"
+          },
+          "403": {
+            "description": "Sin permiso o CSRF inválido"
+          },
+          "404": {
+            "description": "Recurso inexistente o no visible"
+          },
+          "409": {
+            "description": "Estado incompatible o clave reutilizada con otros datos"
+          },
+          "429": {
+            "description": "Límite de intentos; Retry-After: 60"
+          }
+        },
+        "parameters": [
+          {
+            "name": "page",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 10000,
+              "default": 0
+            }
+          },
+          {
+            "name": "pageSize",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 100,
+              "default": 20
+            }
+          },
+          {
+            "name": "q",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "maxLength": 200
+            }
+          },
+          {
+            "name": "location",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "maxLength": 200
+            }
+          },
+          {
+            "name": "category",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "$ref": "#/components/schemas/Category"
+            }
+          },
+          {
+            "name": "status",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "$ref": "#/components/schemas/LostStatus"
+            }
+          },
+          {
+            "name": "dateFrom",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "format": "date"
+            }
+          },
+          {
+            "name": "dateTo",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "format": "date"
+            }
+          },
+          {
+            "name": "sort",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "allOf": [
+                {
+                  "$ref": "#/components/schemas/CatalogSort"
+                }
+              ],
+              "default": "RECENT"
+            }
+          }
+        ]
+      }
+    },
+    "/lost-reports/{id}": {
+      "get": {
+        "summary": "Detalle visible",
+        "operationId": "get_lost_reports_id",
+        "responses": {
+          "200": {
+            "description": "Operación correcta",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LostReportResponseDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Entrada inválida"
+          },
+          "401": {
+            "description": "Sesión requerida o revocada"
+          },
+          "403": {
+            "description": "Sin permiso o CSRF inválido"
+          },
+          "404": {
+            "description": "Recurso inexistente o no visible"
+          },
+          "409": {
+            "description": "Estado incompatible o clave reutilizada con otros datos"
+          },
+          "429": {
+            "description": "Límite de intentos; Retry-After: 60"
+          }
+        },
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ]
+      },
+      "put": {
+        "summary": "Editar publicación",
+        "operationId": "put_lost_reports_id",
+        "responses": {
+          "204": {
+            "description": "Operación correcta"
+          },
+          "400": {
+            "description": "Entrada inválida"
+          },
+          "401": {
+            "description": "Sesión requerida o revocada"
+          },
+          "403": {
+            "description": "Sin permiso o CSRF inválido"
+          },
+          "404": {
+            "description": "Recurso inexistente o no visible"
+          },
+          "409": {
+            "description": "Estado incompatible o clave reutilizada con otros datos"
+          },
+          "429": {
+            "description": "Límite de intentos; Retry-After: 60"
+          }
+        },
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "X-CSRF-TOKEN",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ReportRequestDto"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/lost-reports/{id}/withdraw": {
+      "post": {
+        "summary": "Retirar conservando historial",
+        "operationId": "post_lost_reports_id_withdraw",
+        "responses": {
+          "204": {
+            "description": "Operación correcta"
+          },
+          "400": {
+            "description": "Entrada inválida"
+          },
+          "401": {
+            "description": "Sesión requerida o revocada"
+          },
+          "403": {
+            "description": "Sin permiso o CSRF inválido"
+          },
+          "404": {
+            "description": "Recurso inexistente o no visible"
+          },
+          "409": {
+            "description": "Estado incompatible o clave reutilizada con otros datos"
+          },
+          "429": {
+            "description": "Límite de intentos; Retry-After: 60"
+          }
+        },
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "X-CSRF-TOKEN",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ]
+      }
+    },
+    "/lost-reports/{id}/recover": {
+      "post": {
+        "summary": "Cerrar extravío recuperado externamente",
+        "operationId": "post_lost_reports_id_recover",
+        "responses": {
+          "204": {
+            "description": "Operación correcta"
+          },
+          "400": {
+            "description": "Entrada inválida"
+          },
+          "401": {
+            "description": "Sesión requerida o revocada"
+          },
+          "403": {
+            "description": "Sin permiso o CSRF inválido"
+          },
+          "404": {
+            "description": "Recurso inexistente o no visible"
+          },
+          "409": {
+            "description": "Estado incompatible o clave reutilizada con otros datos"
+          },
+          "429": {
+            "description": "Límite de intentos; Retry-After: 60"
+          }
+        },
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "X-CSRF-TOKEN",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ]
+      }
+    },
+    "/lost-reports/{parent}/photos": {
+      "get": {
+        "summary": "Metadatos de fotos",
+        "operationId": "get_lost_reports_parent_photos",
+        "responses": {
+          "200": {
+            "description": "Operación correcta",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/PhotoResponseDto"
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Entrada inválida"
+          },
+          "401": {
+            "description": "Sesión requerida o revocada"
+          },
+          "403": {
+            "description": "Sin permiso o CSRF inválido"
+          },
+          "404": {
+            "description": "Recurso inexistente o no visible"
+          },
+          "409": {
+            "description": "Estado incompatible o clave reutilizada con otros datos"
+          },
+          "429": {
+            "description": "Límite de intentos; Retry-After: 60"
+          }
+        },
+        "parameters": [
+          {
+            "name": "parent",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ]
+      },
+      "post": {
+        "summary": "Subir JPEG/PNG: máximo 3 fotos, 5 MiB cada una",
+        "operationId": "post_lost_reports_parent_photos",
+        "responses": {
+          "201": {
+            "description": "Operación correcta",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PhotoResponseDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Entrada inválida"
+          },
+          "401": {
+            "description": "Sesión requerida o revocada"
+          },
+          "403": {
+            "description": "Sin permiso o CSRF inválido"
+          },
+          "404": {
+            "description": "Recurso inexistente o no visible"
+          },
+          "409": {
+            "description": "Estado incompatible o clave reutilizada con otros datos"
+          },
+          "429": {
+            "description": "Límite de intentos; Retry-After: 60"
+          },
+          "413": {
+            "description": "Más de 5 MiB por archivo / 6 MiB por petición"
+          },
+          "415": {
+            "description": "Solo JPEG/PNG"
+          }
+        },
+        "parameters": [
+          {
+            "name": "parent",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "X-CSRF-TOKEN",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "file"
+                ],
+                "properties": {
+                  "file": {
+                    "type": "string",
+                    "format": "binary"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/lost-reports/{parent}/photos/{id}": {
+      "get": {
+        "summary": "Contenido de imagen",
+        "operationId": "get_lost_reports_parent_photos_id",
+        "responses": {
+          "200": {
+            "description": "Operación correcta",
+            "content": {
+              "image/png": {
+                "schema": {
+                  "type": "string",
+                  "format": "binary"
+                }
+              },
+              "image/jpeg": {
+                "schema": {
+                  "type": "string",
+                  "format": "binary"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Entrada inválida"
+          },
+          "401": {
+            "description": "Sesión requerida o revocada"
+          },
+          "403": {
+            "description": "Sin permiso o CSRF inválido"
+          },
+          "404": {
+            "description": "Recurso inexistente o no visible"
+          },
+          "409": {
+            "description": "Estado incompatible o clave reutilizada con otros datos"
+          },
+          "429": {
+            "description": "Límite de intentos; Retry-After: 60"
+          }
+        },
+        "parameters": [
+          {
+            "name": "parent",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ]
+      },
+      "delete": {
+        "summary": "Eliminar foto",
+        "operationId": "delete_lost_reports_parent_photos_id",
+        "responses": {
+          "204": {
+            "description": "Operación correcta"
+          },
+          "400": {
+            "description": "Entrada inválida"
+          },
+          "401": {
+            "description": "Sesión requerida o revocada"
+          },
+          "403": {
+            "description": "Sin permiso o CSRF inválido"
+          },
+          "404": {
+            "description": "Recurso inexistente o no visible"
+          },
+          "409": {
+            "description": "Estado incompatible o clave reutilizada con otros datos"
+          },
+          "429": {
+            "description": "Límite de intentos; Retry-After: 60"
+          }
+        },
+        "parameters": [
+          {
+            "name": "parent",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "X-CSRF-TOKEN",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ]
+      }
+    },
+    "/claims": {
+      "get": {
+        "summary": "Listado anterior: array de 20",
+        "operationId": "get_claims",
+        "responses": {
+          "200": {
+            "description": "Operación correcta",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ClaimResponseDto"
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Entrada inválida"
+          },
+          "401": {
+            "description": "Sesión requerida o revocada"
+          },
+          "403": {
+            "description": "Sin permiso o CSRF inválido"
+          },
+          "404": {
+            "description": "Recurso inexistente o no visible"
+          },
+          "409": {
+            "description": "Estado incompatible o clave reutilizada con otros datos"
+          },
+          "429": {
+            "description": "Límite de intentos; Retry-After: 60"
+          }
+        },
+        "parameters": [
+          {
+            "name": "page",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 10000,
+              "default": 0
+            }
+          }
+        ]
+      }
+    },
+    "/claims/search": {
+      "get": {
+        "summary": "Reclamos del solicitante o responsable actual",
+        "operationId": "get_claims_search",
+        "responses": {
+          "200": {
+            "description": "Operación correcta",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PageClaimResponseDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Entrada inválida"
+          },
+          "401": {
+            "description": "Sesión requerida o revocada"
+          },
+          "403": {
+            "description": "Sin permiso o CSRF inválido"
+          },
+          "404": {
+            "description": "Recurso inexistente o no visible"
+          },
+          "409": {
+            "description": "Estado incompatible o clave reutilizada con otros datos"
+          },
+          "429": {
+            "description": "Límite de intentos; Retry-After: 60"
+          }
+        },
+        "parameters": [
+          {
+            "name": "page",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 10000,
+              "default": 0
+            }
+          },
+          {
+            "name": "pageSize",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 100,
+              "default": 20
+            }
+          },
+          {
+            "name": "view",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "$ref": "#/components/schemas/ClaimView"
+            }
+          },
+          {
+            "name": "status",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "$ref": "#/components/schemas/ClaimStatus"
+            }
+          },
+          {
+            "name": "foundItemId",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ]
+      }
+    },
+    "/claims/{id}": {
+      "get": {
+        "summary": "Detalle privado y contactos",
+        "operationId": "get_claims_id",
+        "responses": {
+          "200": {
+            "description": "Operación correcta",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ClaimDetailDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Entrada inválida"
+          },
+          "401": {
+            "description": "Sesión requerida o revocada"
+          },
+          "403": {
+            "description": "Sin permiso o CSRF inválido"
+          },
+          "404": {
+            "description": "Recurso inexistente o no visible"
+          },
+          "409": {
+            "description": "Estado incompatible o clave reutilizada con otros datos"
+          },
+          "429": {
+            "description": "Límite de intentos; Retry-After: 60"
+          }
+        },
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ]
+      }
+    },
+    "/claims/{id}/accept": {
+      "post": {
+        "summary": "Acción de reclamo: accept",
+        "operationId": "post_claims_id_accept",
+        "responses": {
+          "204": {
+            "description": "Operación correcta"
+          },
+          "400": {
+            "description": "Entrada inválida"
+          },
+          "401": {
+            "description": "Sesión requerida o revocada"
+          },
+          "403": {
+            "description": "Sin permiso o CSRF inválido"
+          },
+          "404": {
+            "description": "Recurso inexistente o no visible"
+          },
+          "409": {
+            "description": "Estado incompatible o clave reutilizada con otros datos"
+          },
+          "429": {
+            "description": "Límite de intentos; Retry-After: 60"
+          }
+        },
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "X-CSRF-TOKEN",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ]
+      }
+    },
+    "/claims/{id}/reject": {
+      "post": {
+        "summary": "Acción de reclamo: reject",
+        "operationId": "post_claims_id_reject",
+        "responses": {
+          "204": {
+            "description": "Operación correcta"
+          },
+          "400": {
+            "description": "Entrada inválida"
+          },
+          "401": {
+            "description": "Sesión requerida o revocada"
+          },
+          "403": {
+            "description": "Sin permiso o CSRF inválido"
+          },
+          "404": {
+            "description": "Recurso inexistente o no visible"
+          },
+          "409": {
+            "description": "Estado incompatible o clave reutilizada con otros datos"
+          },
+          "429": {
+            "description": "Límite de intentos; Retry-After: 60"
+          }
+        },
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "X-CSRF-TOKEN",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ]
+      }
+    },
+    "/claims/{id}/cancel": {
+      "post": {
+        "summary": "Acción de reclamo: cancel",
+        "operationId": "post_claims_id_cancel",
+        "responses": {
+          "204": {
+            "description": "Operación correcta"
+          },
+          "400": {
+            "description": "Entrada inválida"
+          },
+          "401": {
+            "description": "Sesión requerida o revocada"
+          },
+          "403": {
+            "description": "Sin permiso o CSRF inválido"
+          },
+          "404": {
+            "description": "Recurso inexistente o no visible"
+          },
+          "409": {
+            "description": "Estado incompatible o clave reutilizada con otros datos"
+          },
+          "429": {
+            "description": "Límite de intentos; Retry-After: 60"
+          }
+        },
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "X-CSRF-TOKEN",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ]
+      }
+    },
+    "/claims/{id}/complete": {
+      "post": {
+        "summary": "Acción de reclamo: complete",
+        "operationId": "post_claims_id_complete",
+        "responses": {
+          "204": {
+            "description": "Operación correcta"
+          },
+          "400": {
+            "description": "Entrada inválida"
+          },
+          "401": {
+            "description": "Sesión requerida o revocada"
+          },
+          "403": {
+            "description": "Sin permiso o CSRF inválido"
+          },
+          "404": {
+            "description": "Recurso inexistente o no visible"
+          },
+          "409": {
+            "description": "Estado incompatible o clave reutilizada con otros datos"
+          },
+          "429": {
+            "description": "Límite de intentos; Retry-After: 60"
+          }
+        },
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "X-CSRF-TOKEN",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ]
+      }
+    },
+    "/responsibles": {
+      "get": {
+        "summary": "Docentes y secretaria habilitados",
+        "operationId": "get_responsibles",
+        "responses": {
+          "200": {
+            "description": "Operación correcta",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PageDirectoryUserDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Entrada inválida"
+          },
+          "401": {
+            "description": "Sesión requerida o revocada"
+          },
+          "403": {
+            "description": "Sin permiso o CSRF inválido"
+          },
+          "404": {
+            "description": "Recurso inexistente o no visible"
+          },
+          "409": {
+            "description": "Estado incompatible o clave reutilizada con otros datos"
+          },
+          "429": {
+            "description": "Límite de intentos; Retry-After: 60"
+          }
+        },
+        "parameters": [
+          {
+            "name": "page",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 10000,
+              "default": 0
+            }
+          },
+          {
+            "name": "pageSize",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 100,
+              "default": 20
+            }
+          },
+          {
+            "name": "q",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "maxLength": 200
+            }
+          },
+          {
+            "name": "role",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "TEACHER",
+                "SECRETARY"
+              ]
+            }
+          }
+        ]
+      }
+    },
+    "/auth/csrf": {
+      "get": {
+        "summary": "Token CSRF y cookie anónima",
+        "operationId": "get_auth_csrf",
+        "responses": {
+          "200": {
+            "description": "Operación correcta",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CsrfResponseDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Entrada inválida"
+          },
+          "401": {
+            "description": "Sesión requerida o revocada"
+          },
+          "403": {
+            "description": "Sin permiso o CSRF inválido"
+          },
+          "404": {
+            "description": "Recurso inexistente o no visible"
+          },
+          "409": {
+            "description": "Estado incompatible o clave reutilizada con otros datos"
+          },
+          "429": {
+            "description": "Límite de intentos; Retry-After: 60"
+          }
+        },
+        "security": []
+      }
+    },
+    "/auth/me": {
+      "get": {
+        "summary": "Perfil de sesión",
+        "operationId": "get_auth_me",
+        "responses": {
+          "200": {
+            "description": "Operación correcta",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UserResponseDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Entrada inválida"
+          },
+          "401": {
+            "description": "Sesión requerida o revocada"
+          },
+          "403": {
+            "description": "Sin permiso o CSRF inválido"
+          },
+          "404": {
+            "description": "Recurso inexistente o no visible"
+          },
+          "409": {
+            "description": "Estado incompatible o clave reutilizada con otros datos"
+          },
+          "429": {
+            "description": "Límite de intentos; Retry-After: 60"
+          }
+        }
+      }
+    },
+    "/auth/login": {
+      "post": {
+        "summary": "Iniciar sesión; renovar CSRF después",
+        "operationId": "post_auth_login",
+        "responses": {
+          "204": {
+            "description": "Operación correcta"
+          },
+          "400": {
+            "description": "Entrada inválida"
+          },
+          "401": {
+            "description": "Sesión requerida o revocada"
+          },
+          "403": {
+            "description": "Sin permiso o CSRF inválido"
+          },
+          "404": {
+            "description": "Recurso inexistente o no visible"
+          },
+          "409": {
+            "description": "Estado incompatible o clave reutilizada con otros datos"
+          },
+          "429": {
+            "description": "Límite de intentos; Retry-After: 60"
+          }
+        },
+        "security": [],
+        "parameters": [
+          {
+            "name": "X-CSRF-TOKEN",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/x-www-form-urlencoded": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "username",
+                  "password"
+                ],
+                "properties": {
+                  "username": {
+                    "type": "string",
+                    "format": "email"
+                  },
+                  "password": {
+                    "type": "string",
+                    "format": "password"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/auth/logout": {
+      "post": {
+        "summary": "Cerrar sesión",
+        "operationId": "post_auth_logout",
+        "responses": {
+          "204": {
+            "description": "Operación correcta"
+          },
+          "400": {
+            "description": "Entrada inválida"
+          },
+          "401": {
+            "description": "Sesión requerida o revocada"
+          },
+          "403": {
+            "description": "Sin permiso o CSRF inválido"
+          },
+          "404": {
+            "description": "Recurso inexistente o no visible"
+          },
+          "409": {
+            "description": "Estado incompatible o clave reutilizada con otros datos"
+          },
+          "429": {
+            "description": "Límite de intentos; Retry-After: 60"
+          }
+        },
+        "security": [],
+        "parameters": [
+          {
+            "name": "X-CSRF-TOKEN",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ]
+      }
+    },
+    "/auth/register": {
+      "post": {
+        "summary": "register",
+        "operationId": "post_auth_register",
+        "responses": {
+          "202": {
+            "description": "Operación correcta"
+          },
+          "400": {
+            "description": "Entrada inválida"
+          },
+          "401": {
+            "description": "Sesión requerida o revocada"
+          },
+          "403": {
+            "description": "Sin permiso o CSRF inválido"
+          },
+          "404": {
+            "description": "Recurso inexistente o no visible"
+          },
+          "409": {
+            "description": "Estado incompatible o clave reutilizada con otros datos"
+          },
+          "429": {
+            "description": "Límite de intentos; Retry-After: 60"
+          }
+        },
+        "security": [],
+        "parameters": [
+          {
+            "name": "X-CSRF-TOKEN",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RegisterRequestDto"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/auth/verify-email": {
+      "post": {
+        "summary": "verify-email",
+        "operationId": "post_auth_verify_email",
+        "responses": {
+          "204": {
+            "description": "Operación correcta"
+          },
+          "400": {
+            "description": "Entrada inválida"
+          },
+          "401": {
+            "description": "Sesión requerida o revocada"
+          },
+          "403": {
+            "description": "Sin permiso o CSRF inválido"
+          },
+          "404": {
+            "description": "Recurso inexistente o no visible"
+          },
+          "409": {
+            "description": "Estado incompatible o clave reutilizada con otros datos"
+          },
+          "429": {
+            "description": "Límite de intentos; Retry-After: 60"
+          }
+        },
+        "security": [],
+        "parameters": [
+          {
+            "name": "X-CSRF-TOKEN",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/VerifyEmailRequestDto"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/auth/resend-verification": {
+      "post": {
+        "summary": "resend-verification",
+        "operationId": "post_auth_resend_verification",
+        "responses": {
+          "202": {
+            "description": "Operación correcta"
+          },
+          "400": {
+            "description": "Entrada inválida"
+          },
+          "401": {
+            "description": "Sesión requerida o revocada"
+          },
+          "403": {
+            "description": "Sin permiso o CSRF inválido"
+          },
+          "404": {
+            "description": "Recurso inexistente o no visible"
+          },
+          "409": {
+            "description": "Estado incompatible o clave reutilizada con otros datos"
+          },
+          "429": {
+            "description": "Límite de intentos; Retry-After: 60"
+          }
+        },
+        "security": [],
+        "parameters": [
+          {
+            "name": "X-CSRF-TOKEN",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/EmailRequestDto"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/auth/forgot-password": {
+      "post": {
+        "summary": "forgot-password",
+        "operationId": "post_auth_forgot_password",
+        "responses": {
+          "202": {
+            "description": "Operación correcta"
+          },
+          "400": {
+            "description": "Entrada inválida"
+          },
+          "401": {
+            "description": "Sesión requerida o revocada"
+          },
+          "403": {
+            "description": "Sin permiso o CSRF inválido"
+          },
+          "404": {
+            "description": "Recurso inexistente o no visible"
+          },
+          "409": {
+            "description": "Estado incompatible o clave reutilizada con otros datos"
+          },
+          "429": {
+            "description": "Límite de intentos; Retry-After: 60"
+          }
+        },
+        "security": [],
+        "parameters": [
+          {
+            "name": "X-CSRF-TOKEN",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/EmailRequestDto"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/auth/reset-password": {
+      "post": {
+        "summary": "reset-password",
+        "operationId": "post_auth_reset_password",
+        "responses": {
+          "204": {
+            "description": "Operación correcta"
+          },
+          "400": {
+            "description": "Entrada inválida"
+          },
+          "401": {
+            "description": "Sesión requerida o revocada"
+          },
+          "403": {
+            "description": "Sin permiso o CSRF inválido"
+          },
+          "404": {
+            "description": "Recurso inexistente o no visible"
+          },
+          "409": {
+            "description": "Estado incompatible o clave reutilizada con otros datos"
+          },
+          "429": {
+            "description": "Límite de intentos; Retry-After: 60"
+          }
+        },
+        "security": [],
+        "parameters": [
+          {
+            "name": "X-CSRF-TOKEN",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ResetPasswordRequestDto"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/auth/change-password": {
+      "post": {
+        "summary": "change-password",
+        "operationId": "post_auth_change_password",
+        "responses": {
+          "204": {
+            "description": "Operación correcta"
+          },
+          "400": {
+            "description": "Entrada inválida"
+          },
+          "401": {
+            "description": "Sesión requerida o revocada"
+          },
+          "403": {
+            "description": "Sin permiso o CSRF inválido"
+          },
+          "404": {
+            "description": "Recurso inexistente o no visible"
+          },
+          "409": {
+            "description": "Estado incompatible o clave reutilizada con otros datos"
+          },
+          "429": {
+            "description": "Límite de intentos; Retry-After: 60"
+          }
+        },
+        "parameters": [
+          {
+            "name": "X-CSRF-TOKEN",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ChangePasswordRequestDto"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/health": {
+      "get": {
+        "summary": "Disponibilidad de API y PostgreSQL",
+        "operationId": "get_health",
+        "responses": {
+          "200": {
+            "description": "Operación correcta",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "status": {
+                      "type": "string",
+                      "enum": [
+                        "UP",
+                        "DOWN"
+                      ]
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Entrada inválida"
+          },
+          "401": {
+            "description": "Sesión requerida o revocada"
+          },
+          "403": {
+            "description": "Sin permiso o CSRF inválido"
+          },
+          "404": {
+            "description": "Recurso inexistente o no visible"
+          },
+          "409": {
+            "description": "Estado incompatible o clave reutilizada con otros datos"
+          },
+          "429": {
+            "description": "Límite de intentos; Retry-After: 60"
+          },
+          "503": {
+            "description": "Base de datos no disponible"
+          }
+        },
+        "security": []
+      }
+    },
+    "/openapi.json": {
+      "get": {
+        "summary": "Contrato OpenAPI",
+        "operationId": "get_openapi_json",
+        "responses": {
+          "200": {
+            "description": "Operación correcta",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Entrada inválida"
+          },
+          "401": {
+            "description": "Sesión requerida o revocada"
+          },
+          "403": {
+            "description": "Sin permiso o CSRF inválido"
+          },
+          "404": {
+            "description": "Recurso inexistente o no visible"
+          },
+          "409": {
+            "description": "Estado incompatible o clave reutilizada con otros datos"
+          },
+          "429": {
+            "description": "Límite de intentos; Retry-After: 60"
+          }
+        },
+        "security": []
+      }
+    }
+  },
+  "components": {
+    "securitySchemes": {
+      "sessionCookie": {
+        "type": "apiKey",
+        "in": "cookie",
+        "name": "JSESSIONID"
+      }
+    },
+    "schemas": {
+      "ClaimView": {
+        "type": "string",
+        "enum": [
+          "ALL",
+          "SENT",
+          "RECEIVED"
+        ]
+      },
+      "CatalogSort": {
+        "type": "string",
+        "enum": [
+          "RECENT",
+          "OLDEST",
+          "TITLE_ASC",
+          "TITLE_DESC"
+        ]
+      },
+      "EmailStatus": {
+        "type": "string",
+        "enum": [
+          "PENDING",
+          "SENT",
+          "FAILED"
+        ]
+      },
+      "ClaimStatus": {
+        "type": "string",
+        "enum": [
+          "PENDING",
+          "ACCEPTED",
+          "REJECTED",
+          "CANCELLED",
+          "COMPLETED",
+          "CLOSED"
+        ]
+      },
+      "LostStatus": {
+        "type": "string",
+        "enum": [
+          "ACTIVE",
+          "RECOVERED",
+          "WITHDRAWN"
+        ]
+      },
+      "CustodyStatus": {
+        "type": "string",
+        "enum": [
+          "WITH_FINDER",
+          "OFFICE"
+        ]
+      },
+      "FoundStatus": {
+        "type": "string",
+        "enum": [
+          "AVAILABLE",
+          "RETURNED",
+          "WITHDRAWN"
+        ]
+      },
+      "UserRole": {
+        "type": "string",
+        "enum": [
+          "STUDENT",
+          "TEACHER",
+          "SECRETARY"
+        ]
+      },
+      "Category": {
+        "type": "string",
+        "enum": [
+          "ELECTRONICS",
+          "DOCUMENTS",
+          "KEYS",
+          "CLOTHING",
+          "OTHER"
+        ]
+      },
+      "DirectoryUserDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "displayName": {
+            "type": "string"
+          },
+          "email": {
+            "type": "string"
+          },
+          "role": {
+            "$ref": "#/components/schemas/UserRole"
+          }
+        }
+      },
+      "DirectoryQueryDto": {
+        "type": "object",
+        "properties": {
+          "q": {
+            "type": "string"
+          },
+          "role": {
+            "$ref": "#/components/schemas/UserRole"
+          },
+          "page": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "pageSize": {
+            "type": "integer",
+            "format": "int32"
+          }
+        }
+      },
+      "ClaimQueryDto": {
+        "type": "object",
+        "properties": {
+          "status": {
+            "$ref": "#/components/schemas/ClaimStatus"
+          },
+          "view": {
+            "$ref": "#/components/schemas/ClaimView"
+          },
+          "foundItemId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "page": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "pageSize": {
+            "type": "integer",
+            "format": "int32"
+          }
+        }
+      },
+      "ClaimDetailDto": {
+        "type": "object",
+        "properties": {
+          "claim": {
+            "$ref": "#/components/schemas/ClaimResponseDto"
+          },
+          "foundItem": {
+            "$ref": "#/components/schemas/FoundItemResponseDto"
+          },
+          "responsible": {
+            "$ref": "#/components/schemas/DirectoryUserDto"
+          },
+          "claimant": {
+            "$ref": "#/components/schemas/DirectoryUserDto"
+          }
+        }
+      },
+      "CatalogQueryDto": {
+        "type": "object",
+        "properties": {
+          "q": {
+            "type": "string"
+          },
+          "category": {
+            "$ref": "#/components/schemas/Category"
+          },
+          "location": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string"
+          },
+          "custody": {
+            "$ref": "#/components/schemas/CustodyStatus"
+          },
+          "dateFrom": {
+            "type": "string",
+            "format": "date"
+          },
+          "dateTo": {
+            "type": "string",
+            "format": "date"
+          },
+          "sort": {
+            "$ref": "#/components/schemas/CatalogSort"
+          },
+          "page": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "pageSize": {
+            "type": "integer",
+            "format": "int32"
+          }
+        }
+      },
+      "PhotoResponseDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "contentType": {
+            "type": "string"
+          },
+          "sizeBytes": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "ResetPasswordRequestDto": {
+        "type": "object",
+        "properties": {
+          "token": {
+            "type": "string"
+          },
+          "newPassword": {
+            "type": "string",
+            "minLength": 12,
+            "maxLength": 72,
+            "writeOnly": true,
+            "description": "Máximo 72 bytes UTF-8; no se recorta."
+          }
+        },
+        "required": [
+          "token",
+          "newPassword"
+        ]
+      },
+      "ChangePasswordRequestDto": {
+        "type": "object",
+        "properties": {
+          "currentPassword": {
+            "type": "string"
+          },
+          "newPassword": {
+            "type": "string",
+            "minLength": 12,
+            "maxLength": 72,
+            "writeOnly": true,
+            "description": "Máximo 72 bytes UTF-8; no se recorta."
+          }
+        },
+        "required": [
+          "currentPassword",
+          "newPassword"
+        ]
+      },
+      "RegisterRequestDto": {
+        "type": "object",
+        "properties": {
+          "email": {
+            "type": "string"
+          },
+          "password": {
+            "type": "string",
+            "minLength": 12,
+            "maxLength": 72,
+            "writeOnly": true,
+            "description": "Máximo 72 bytes UTF-8; no se recorta."
+          },
+          "displayName": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "email",
+          "password",
+          "displayName"
+        ]
+      },
+      "EmailRequestDto": {
+        "type": "object",
+        "properties": {
+          "email": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "email"
+        ]
+      },
+      "VerifyEmailRequestDto": {
+        "type": "object",
+        "properties": {
+          "token": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "token"
+        ]
+      },
+      "CsrfResponseDto": {
+        "type": "object",
+        "properties": {
+          "headerName": {
+            "type": "string"
+          },
+          "token": {
+            "type": "string"
+          }
+        }
+      },
+      "ErrorResponseDto": {
+        "type": "object",
+        "properties": {
+          "status": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "message": {
+            "type": "string"
+          }
+        }
+      },
+      "IdResponseDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          }
+        }
+      },
+      "DelegateRequestDto": {
+        "type": "object",
+        "properties": {
+          "responsibleId": {
+            "type": "string",
+            "format": "uuid"
+          }
+        },
+        "required": [
+          "responsibleId"
+        ]
+      },
+      "ClaimRequestDto": {
+        "type": "object",
+        "properties": {
+          "privateDescription": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 2000
+          },
+          "lostReportId": {
+            "type": "string",
+            "format": "uuid",
+            "nullable": true
+          }
+        },
+        "required": [
+          "privateDescription"
+        ]
+      },
+      "ReportRequestDto": {
+        "type": "object",
+        "properties": {
+          "title": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 120
+          },
+          "description": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 2000
+          },
+          "category": {
+            "$ref": "#/components/schemas/Category"
+          },
+          "location": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 200
+          },
+          "occurredOn": {
+            "type": "string",
+            "format": "date",
+            "description": "Fecha de hoy o anterior."
+          }
+        },
+        "required": [
+          "title",
+          "description",
+          "category",
+          "location",
+          "occurredOn"
+        ]
+      },
+      "ClaimResponseDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "foundItemId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "claimantId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "lostReportId": {
+            "type": "string",
+            "format": "uuid",
+            "nullable": true
+          },
+          "privateDescription": {
+            "type": "string"
+          },
+          "status": {
+            "$ref": "#/components/schemas/ClaimStatus"
+          },
+          "acceptedBy": {
+            "type": "string",
+            "format": "uuid",
+            "nullable": true
+          },
+          "acceptedAt": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "completedAt": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "responsibleEmail": {
+            "type": "string"
+          },
+          "claimantEmail": {
+            "type": "string"
+          }
+        }
+      },
+      "LostReportResponseDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "ownerId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "title": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "category": {
+            "$ref": "#/components/schemas/Category"
+          },
+          "lostLocation": {
+            "type": "string"
+          },
+          "lostOn": {
+            "type": "string",
+            "format": "date"
+          },
+          "status": {
+            "$ref": "#/components/schemas/LostStatus"
+          },
+          "recoveredAt": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "FoundItemResponseDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "reporterId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "responsibleId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "title": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "category": {
+            "$ref": "#/components/schemas/Category"
+          },
+          "foundLocation": {
+            "type": "string"
+          },
+          "foundOn": {
+            "type": "string",
+            "format": "date"
+          },
+          "status": {
+            "$ref": "#/components/schemas/FoundStatus"
+          },
+          "custody": {
+            "$ref": "#/components/schemas/CustodyStatus"
+          },
+          "officeMarkedBy": {
+            "type": "string",
+            "format": "uuid",
+            "nullable": true
+          },
+          "officeMarkedAt": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "UserResponseDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "email": {
+            "type": "string"
+          },
+          "displayName": {
+            "type": "string"
+          },
+          "role": {
+            "$ref": "#/components/schemas/UserRole"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "PageFoundItemResponseDto": {
+        "type": "object",
+        "required": [
+          "items",
+          "total",
+          "page",
+          "pageSize",
+          "totalPages",
+          "hasNext",
+          "hasPrevious"
+        ],
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/FoundItemResponseDto"
+            }
+          },
+          "total": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "page": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "pageSize": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "totalPages": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "hasNext": {
+            "type": "boolean"
+          },
+          "hasPrevious": {
+            "type": "boolean"
+          }
+        }
+      },
+      "PageLostReportResponseDto": {
+        "type": "object",
+        "required": [
+          "items",
+          "total",
+          "page",
+          "pageSize",
+          "totalPages",
+          "hasNext",
+          "hasPrevious"
+        ],
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/LostReportResponseDto"
+            }
+          },
+          "total": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "page": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "pageSize": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "totalPages": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "hasNext": {
+            "type": "boolean"
+          },
+          "hasPrevious": {
+            "type": "boolean"
+          }
+        }
+      },
+      "PageClaimResponseDto": {
+        "type": "object",
+        "required": [
+          "items",
+          "total",
+          "page",
+          "pageSize",
+          "totalPages",
+          "hasNext",
+          "hasPrevious"
+        ],
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ClaimResponseDto"
+            }
+          },
+          "total": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "page": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "pageSize": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "totalPages": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "hasNext": {
+            "type": "boolean"
+          },
+          "hasPrevious": {
+            "type": "boolean"
+          }
+        }
+      },
+      "PageDirectoryUserDto": {
+        "type": "object",
+        "required": [
+          "items",
+          "total",
+          "page",
+          "pageSize",
+          "totalPages",
+          "hasNext",
+          "hasPrevious"
+        ],
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/DirectoryUserDto"
+            }
+          },
+          "total": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "page": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "pageSize": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "totalPages": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "hasNext": {
+            "type": "boolean"
+          },
+          "hasPrevious": {
+            "type": "boolean"
+          }
+        }
+      },
+      "PagePhotoResponseDto": {
+        "type": "object",
+        "required": [
+          "items",
+          "total",
+          "page",
+          "pageSize",
+          "totalPages",
+          "hasNext",
+          "hasPrevious"
+        ],
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PhotoResponseDto"
+            }
+          },
+          "total": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "page": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "pageSize": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "totalPages": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "hasNext": {
+            "type": "boolean"
+          },
+          "hasPrevious": {
+            "type": "boolean"
+          }
+        }
+      }
+    }
+  }
+}
