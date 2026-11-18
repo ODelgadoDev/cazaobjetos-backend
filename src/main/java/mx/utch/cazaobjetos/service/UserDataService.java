@@ -9,12 +9,14 @@ import mx.utch.cazaobjetos.dto.UserResponseDto;
 import mx.utch.cazaobjetos.exception.BusinessException;
 import mx.utch.cazaobjetos.model.UserModel;
 import mx.utch.cazaobjetos.repository.UserRepository;
+import mx.utch.cazaobjetos.repository.ProfilePhotoRepository;
 
 @Service
 @Transactional(readOnly = true)
 public class UserDataService {
     private final UserRepository users;
-    public UserDataService(UserRepository users) { this.users = users; }
+    private final ProfilePhotoRepository photos;
+    public UserDataService(UserRepository users, ProfilePhotoRepository photos) { this.users = users; this.photos = photos; }
     public UserModel user(UUID id) {
         return users.findById(id).orElseThrow(() -> new BusinessException(HttpStatus.NOT_FOUND, Constants.NOT_FOUND));
     }
@@ -27,5 +29,16 @@ public class UserDataService {
         return users.findByEmailAndEnabledTrue(email)
             .orElseThrow(() -> new BusinessException(HttpStatus.UNAUTHORIZED, "Cuenta no disponible")).getId();
     }
-    public UserResponseDto me(String email) { return user(userId(email)).toResponseDto(); }
+    @Transactional
+    public UserModel lockMe(String email) {
+        var user = users.findLockedById(userId(email))
+            .orElseThrow(() -> new BusinessException(HttpStatus.UNAUTHORIZED, "Cuenta no disponible"));
+        if (!user.getEnabled()) throw new BusinessException(HttpStatus.UNAUTHORIZED, "Cuenta no disponible");
+        return user;
+    }
+    public UserResponseDto me(String email) {
+        var user = users.findByEmailAndEnabledTrue(email)
+            .orElseThrow(() -> new BusinessException(HttpStatus.UNAUTHORIZED, "Cuenta no disponible"));
+        return user.toResponseDto(photos.findVersionByUserId(user.getId()).orElse(null));
+    }
 }

@@ -17,4 +17,9 @@ public record FoundItemResponseDto(
         CustodyStatus custody,
         UUID officeMarkedBy,
         Instant officeMarkedAt,
-        Instant createdAt) {}
+        Instant createdAt,
+        String teacherName,
+        String custodyLocation,
+        UUID custodyMarkedBy,
+        Instant custodyMarkedAt,
+        UUID sourceLostReportId) {}

@@ -22,6 +22,24 @@ public class UserModel {
     @Column(name = "display_name")
     private String displayName;
 
+    @Column(name = "alias", length = 60)
+    private String alias;
+
+    @Column(name = "classroom", length = 80)
+    private String classroom;
+
+    @Column(name = "group_name", length = 80)
+    private String groupName;
+
+    @Column(name = "course", length = 120)
+    private String course;
+
+    @Column(name = "degree", length = 160)
+    private String degree;
+
+    @Column(name = "building", length = 80)
+    private String building;
+
     @Enumerated(EnumType.STRING)
     @Column(name = "role")
     private UserRole role;
@@ -55,6 +73,24 @@ public class UserModel {
     public String getDisplayName() { return displayName; }
     public void setDisplayName(String displayName) { this.displayName = displayName; }
 
+    public String getAlias() { return alias; }
+    public void setAlias(String alias) { this.alias = alias; }
+
+    public String getClassroom() { return classroom; }
+    public void setClassroom(String classroom) { this.classroom = classroom; }
+
+    public String getGroupName() { return groupName; }
+    public void setGroupName(String groupName) { this.groupName = groupName; }
+
+    public String getCourse() { return course; }
+    public void setCourse(String course) { this.course = course; }
+
+    public String getDegree() { return degree; }
+    public void setDegree(String degree) { this.degree = degree; }
+
+    public String getBuilding() { return building; }
+    public void setBuilding(String building) { this.building = building; }
+
     public UserRole getRole() { return role; }
     public void setRole(UserRole role) { this.role = role; }
 
@@ -64,7 +100,10 @@ public class UserModel {
     public Instant getCreatedAt() { return createdAt; }
     public void setCreatedAt(Instant createdAt) { this.createdAt = createdAt; }
 
-    public UserResponseDto toResponseDto() {
-        return new UserResponseDto(id, email, displayName, role, createdAt);
+    public UserResponseDto toResponseDto() { return toResponseDto(null); }
+
+    public UserResponseDto toResponseDto(UUID avatarVersion) {
+        return new UserResponseDto(id, email, displayName, role, createdAt, alias, classroom, groupName, course, degree, building,
+                mx.utch.cazaobjetos.util.StudentNumberUtil.fromEmail(email, role), avatarVersion);
     }
 }

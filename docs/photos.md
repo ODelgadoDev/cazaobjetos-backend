@@ -1,6 +1,6 @@
 # Módulo 3: fotografías
 
-Cada hallazgo o extravío admite hasta 3 fotografías opcionales. Se publican primero los datos del objeto; después se suben las fotos individualmente. No se cambian los DTOs existentes del catálogo ni de publicación.
+Cada hallazgo o extravío admite hasta 3 fotografías opcionales. Los extravíos también admiten imágenes de referencia importadas desde un enlace HTTPS público. Se publican primero los datos del objeto; después se suben las fotos individualmente. No se cambian los DTOs existentes del catálogo ni de publicación.
 
 ## API
 
@@ -41,3 +41,16 @@ Importa `Fotos.postman_collection.json`, selecciona **CazaObjetos · Local** y c
 Ejecuta las 20 peticiones en orden. Crean un hallazgo y un extravío ficticios, suben/consultan/eliminan una foto de cada uno. Las publicaciones de prueba permanecen en la base. Para Newman usa `--working-dir postman` para resolver `fixtures/photo.png`.
 
 Verificado el 10 de noviembre de 2026: `mvn verify` completó 44 pruebas sin fallos contra PostgreSQL temporal, con migración V4, validación de contenido y tamaño, permisos, estados, CSRF, descarga y concurrencia. Newman completó las 20 peticiones de fotos y 26 assertions sin fallos.
+
+
+## Referencias de extravíos e importación por enlace
+
+POST `/api/v1/lost-reports/{parent}/photos` admite el campo multipart opcional `referenceImage` (false por defecto). Lista y carga devuelven también ese indicador. Las fotos de hallazgos conservan referenceImage=false. Flyway V7 agrega el campo sin cambiar las imágenes existentes.
+
+POST `/api/v1/lost-reports/{parent}/photos/import` acepta JSON como `{"url":"https://ejemplo.com/foto.png","referenceImage":true}` y devuelve 201 con los mismos metadatos. Requiere sesión, CSRF y los permisos de carga. Importa una copia validada, decodificada y recodificada a PostgreSQL. No se conserva el enlace como recurso externo de visualización.
+
+La importación admite HTTPS en puerto 443, hasta tres redirecciones HTTPS y un máximo de 5 MiB descargados. Rechaza destinos de red privada/local y rangos especiales, tanto al comprobar el enlace como al resolver direcciones para conectar. No reenvía cookies ni credenciales del usuario al servidor remoto. Usa tiempos de espera de conexión/respuesta y un plazo de descarga. El límite final de fotos se vuelve a comprobar al guardar.
+
+En «Perdí algo», el usuario puede subir un JPG/PNG, pegar una imagen copiada en el navegador o usar su enlace directo. La casilla de referencia permite distinguir un modelo parecido de una foto del objeto real. Si una importación falla, el reporte se conserva y la app abre su edición con el mensaje y la opción de adjuntar otra imagen. Las páginas web completas, enlaces con acceso privado y formatos diferentes de JPEG/PNG pueden requerir copiar la imagen o guardarla como PNG/JPG.
+
+Comprobación local del 17 de noviembre de 2026: 68 pruebas Java sin fallos, incluyendo permisos, cuota, validación de la imagen y restricciones de URL/red. Se probaron en navegador reportes sin imagen, desde archivo, mediante pegado y mediante enlace HTTPS real.

@@ -12,6 +12,7 @@ import mx.utch.cazaobjetos.model.FoundItemModel;
 
 @Repository
 public interface FoundItemRepository extends JpaRepository<FoundItemModel, UUID>, org.springframework.data.jpa.repository.JpaSpecificationExecutor<FoundItemModel> {
+    org.springframework.data.domain.Page<FoundItemModel> findBySourceLostReportIdAndStatusNot(UUID sourceLostReportId,mx.utch.cazaobjetos.enums.FoundStatus status,org.springframework.data.domain.Pageable page);
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     @Query("select m from FoundItemModel m where m.id = :id")
     Optional<FoundItemModel> findLockedById(@Param("id") UUID id);

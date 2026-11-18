@@ -11,13 +11,14 @@ import mx.utch.cazaobjetos.service.*;
 @RestController
 @RequestMapping("${url.api}/lost-reports")
 public class LostReportController {
+    private final FoundPublicationService publications;
     private final ItemService service;
     private final CreationService creations;
     private final CatalogService catalog;
     private final UserDataService users;
 
-    public LostReportController(ItemService service, UserDataService users, CatalogService catalog, CreationService creations) {
-        this.creations=creations;
+    public LostReportController(ItemService service, UserDataService users, CatalogService catalog, CreationService creations, FoundPublicationService publications) {
+        this.creations=creations;this.publications=publications;
         this.service = service;
         this.catalog = catalog;
         this.users = users;
@@ -30,6 +31,10 @@ public class LostReportController {
     @GetMapping("/{id}")
     public ResponseEntity<LostReportResponseDto> findById(@PathVariable UUID id) {
         return ResponseEntity.ok(service.lost(id));
+    }
+    @GetMapping("/{id}/matches")
+    public PageResponseDto<FoundItemResponseDto> matches(Principal principal,@PathVariable UUID id,@RequestParam(defaultValue="0") int page,@RequestParam(defaultValue="20") int pageSize) {
+        return publications.matches(users.userId(principal.getName()),id,page,pageSize);
     }
     @GetMapping("/mine")
     public ResponseEntity<PageResponseDto<LostReportResponseDto>> mine(Principal principal, @Valid @ModelAttribute CatalogQueryDto query) {

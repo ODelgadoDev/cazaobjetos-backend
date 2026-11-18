@@ -12,10 +12,8 @@ import mx.utch.cazaobjetos.repository.*;
 @Transactional(propagation = Propagation.MANDATORY)
 public class ItemEventService {
     private final AuditEventRepository audit;
-    private final EmailOutboxRepository outbox;
-    public ItemEventService(AuditEventRepository audit, EmailOutboxRepository outbox) {
+    public ItemEventService(AuditEventRepository audit) {
         this.audit = audit;
-        this.outbox = outbox;
     }
     public void audit(UUID actor, UUID entity, String action) {
         AuditEventModel event = new AuditEventModel();
@@ -25,16 +23,5 @@ public class ItemEventService {
         event.setAction(action);
         event.setCreatedAt(Instant.now());
         audit.save(event);
-    }
-    public void recovered(FoundItemModel item, String recipient) {
-        EmailOutboxModel email = new EmailOutboxModel();
-        email.setId(UUID.randomUUID());
-        email.setEventKey("RECOVERED:" + item.getId());
-        email.setRecipient(recipient);
-        email.setSubject("Objeto recuperado");
-        email.setBody("El solicitante confirmó que recuperó el objeto: " + item.getTitle() + ". Folio: " + item.getId());
-        email.setStatus(EmailStatus.PENDING);
-        email.setCreatedAt(Instant.now());
-        outbox.save(email);
     }
 }

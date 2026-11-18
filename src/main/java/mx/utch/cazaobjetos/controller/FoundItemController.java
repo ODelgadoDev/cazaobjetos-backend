@@ -49,6 +49,11 @@ public class FoundItemController {
     public ResponseEntity<IdResponseDto> create(@RequestHeader(value="Idempotency-Key",required=false) String key, Principal principal, @Valid @RequestBody ReportRequestDto request) {
         return ResponseEntity.status(HttpStatus.CREATED).body(new IdResponseDto(creations.found(users.userId(principal.getName()), key, request)));
     }
+    @PostMapping(value="/publish",consumes=MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ResponseEntity<IdResponseDto> publish(@RequestHeader(value="Idempotency-Key",required=false) String key,Principal principal,
+            @Valid @RequestPart("request") FoundPublicationRequestDto request,@RequestPart("file") org.springframework.web.multipart.MultipartFile file) {
+        return ResponseEntity.status(201).body(new IdResponseDto(creations.publishFound(users.userId(principal.getName()),key,request,file)));
+    }
     @PostMapping("/{id}/office")
     public ResponseEntity<Void> office(Principal principal, @PathVariable UUID id) {
         service.office(users.userId(principal.getName()), id);
@@ -59,8 +64,18 @@ public class FoundItemController {
         service.delegate(users.userId(principal.getName()), id, request.responsibleId());
         return ResponseEntity.noContent().build();
     }
-    @PostMapping("/{id}/claims")
+    @PostMapping(value="/{id}/claims",consumes=MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<IdResponseDto> claim(@RequestHeader(value="Idempotency-Key",required=false) String key, Principal principal, @PathVariable UUID id, @Valid @RequestBody ClaimRequestDto request) {
         return ResponseEntity.status(HttpStatus.CREATED).body(new IdResponseDto(creations.claim(users.userId(principal.getName()), id, key, request)));
     }
+    @PostMapping(value="/{id}/claims",consumes=MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ResponseEntity<IdResponseDto> claimWithEvidence(@RequestHeader(value="Idempotency-Key",required=false) String key,Principal principal,@PathVariable UUID id,
+            @Valid @RequestPart("request") ClaimRequestDto request,@RequestPart(value="files",required=false) List<org.springframework.web.multipart.MultipartFile> files) {
+        return ResponseEntity.status(201).body(new IdResponseDto(creations.claimWithEvidence(users.userId(principal.getName()),id,key,request,files==null?List.of():files)));
+    }
+    @PutMapping("/{id}/custody")
+    public ResponseEntity<Void> custody(Principal principal,@PathVariable UUID id,@Valid @RequestBody CustodyRequestDto request) {
+        service.custody(users.userId(principal.getName()),id,request);return ResponseEntity.noContent().build();
+    }
+
 }

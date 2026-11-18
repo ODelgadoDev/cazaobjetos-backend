@@ -11,12 +11,16 @@ import mx.utch.cazaobjetos.exception.BusinessException;
 public class ApiExceptionHandler {
     @ExceptionHandler(org.springframework.web.multipart.MaxUploadSizeExceededException.class)
     public ResponseEntity<ErrorResponseDto> tooLarge(Exception exception) {
-        return ResponseEntity.status(413).body(new ErrorResponseDto(413,"La foto excede el tamaño permitido (5 MB)"));
+        return ResponseEntity.status(413).body(new ErrorResponseDto(413,"La carga excede el límite: 5 MB por archivo y 26 MB por solicitud"));
     }
     @ExceptionHandler({org.springframework.web.multipart.support.MissingServletRequestPartException.class,
             org.springframework.web.bind.MissingServletRequestParameterException.class})
     public ResponseEntity<ErrorResponseDto> missingFile(Exception exception) {
-        return ResponseEntity.badRequest().body(new ErrorResponseDto(400,"Falta el archivo en el campo file"));
+        return ResponseEntity.badRequest().body(new ErrorResponseDto(400,"Falta una parte requerida del formulario o un parámetro de la solicitud"));
+    }
+    @ExceptionHandler(org.springframework.http.converter.HttpMessageNotReadableException.class)
+    public ResponseEntity<ErrorResponseDto> unreadable(Exception exception) {
+        return ResponseEntity.badRequest().body(new ErrorResponseDto(400, "Revisa el formato y los campos permitidos de la solicitud"));
     }
     @ExceptionHandler(BusinessException.class)
     public ResponseEntity<ErrorResponseDto> business(BusinessException exception) {

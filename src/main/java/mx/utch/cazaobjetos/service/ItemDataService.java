@@ -50,8 +50,9 @@ public class ItemDataService {
     public boolean hasActiveLinkedClaim(UUID loss) {
         return claims.existsByLostReportIdAndStatusIn(loss, List.of(ClaimStatus.PENDING, ClaimStatus.ACCEPTED));
     }
-    public void closeOtherClaims(UUID item) {
-        claims.findByFoundItemIdAndStatus(item, ClaimStatus.PENDING).forEach(c -> c.setStatus(ClaimStatus.CLOSED));
+    public List<ClaimModel> closeOtherClaims(UUID item) {
+        var pending=claims.findByFoundItemIdAndStatus(item,ClaimStatus.PENDING);
+        pending.forEach(c->c.setStatus(ClaimStatus.CLOSED));return pending;
     }
 
     public FoundItemModel createFound(UUID actor, ReportRequestDto request) {

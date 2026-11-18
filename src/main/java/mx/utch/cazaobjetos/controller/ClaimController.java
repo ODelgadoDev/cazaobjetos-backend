@@ -34,8 +34,8 @@ public class ClaimController {
         return queries.detail(users.userId(principal.getName()),id);
     }
     @PostMapping("/{id}/{action}")
-    public ResponseEntity<Void> decide(Principal principal, @PathVariable UUID id, @PathVariable String action) {
-        service.decide(users.userId(principal.getName()), id, action);
+    public ResponseEntity<Void> decide(Principal principal, @PathVariable UUID id, @PathVariable String action, @Valid @RequestBody(required=false) ClaimDecisionRequestDto request) {
+        service.decide(users.userId(principal.getName()), id, action, request==null?null:request.reason());
         return ResponseEntity.noContent().build();
     }
 }

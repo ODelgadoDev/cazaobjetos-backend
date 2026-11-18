@@ -52,13 +52,13 @@ class ItemServiceTest {
         fails(409,()->service.office(teacher,id));
         assertEquals(1L,db.queryForObject("SELECT count(*) FROM audit_event WHERE action='FOUND_WITHDRAWN'",Long.class));
     }
-    @Test void activeClaimsProtectFoundAndLinkedLostFromChanges() {
+    @Test void activeClaimsAllowEditingButProtectWithdrawal() {
         UUID id=found(),loss=service.createLost(owner,report());
         UUID c=service.claim(owner,id,new ClaimRequestDto("Mi mochila negra",loss));
         for(boolean accepted:List.of(false,true)) {
             if(accepted) service.decide(finder,c,"accept");
-            fails(409,()->service.editFound(finder,id,report()));fails(409,()->service.withdrawFound(finder,id));
-            fails(409,()->service.editLost(owner,loss,report()));fails(409,()->service.withdrawLost(owner,loss));
+            service.editFound(finder,id,report());fails(409,()->service.withdrawFound(finder,id));
+            service.editLost(owner,loss,report());fails(409,()->service.withdrawLost(owner,loss));
         }
         service.decide(owner,c,"cancel");
         service.editFound(finder,id,report());service.editLost(owner,loss,report());
@@ -105,7 +105,7 @@ class ItemServiceTest {
         fails(403,()->service.decide(finder,c,"complete"));
         service.decide(owner,c,"complete"); service.decide(owner,c,"complete");
         assertEquals(FoundStatus.RETURNED,service.found(item).status());
-        assertEquals(1L,db.queryForObject("SELECT count(*) FROM email_outbox WHERE recipient='finder@utch.edu.mx' AND status='PENDING'",Long.class));
+        assertEquals(1L,db.queryForObject("SELECT count(*) FROM email_outbox WHERE recipient='finder@utch.edu.mx' AND status='PENDING' AND event_key LIKE 'MILESTONE:COMPLETED:%'",Long.class));
     }
     @Test void linkedLossClosesAndOtherClaimsClose() {
         UUID item=found(),loss=service.createLost(owner,report());
@@ -165,7 +165,7 @@ class ItemServiceTest {
             first.get(10, TimeUnit.SECONDS);
             second.get(10, TimeUnit.SECONDS);
         }
-        assertEquals(1L, db.queryForObject("SELECT count(*) FROM email_outbox", Long.class));
+        assertEquals(2L, db.queryForObject("SELECT count(*) FROM email_outbox WHERE event_key LIKE 'MILESTONE:COMPLETED:%'", Long.class));
         assertEquals(FoundStatus.RETURNED, service.found(item).status());
     }
 }

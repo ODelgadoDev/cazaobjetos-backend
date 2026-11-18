@@ -28,7 +28,7 @@ PUT exige todos estos campos; no es una actualización parcial:
 }
 ```
 
-Devuelve 204. Conserva IDs, autor, responsable, estado, resguardo, fecha de creación y reclamos. Aplica las mismas validaciones de publicación (incluida fecha no futura). Edición y retiro generan eventos de auditoría con actor, entidad y fecha; no se almacenan versiones anteriores del texto.
+Devuelve 204. Conserva IDs, autor, responsable, estado, resguardo, fecha de creación y reclamos. Aplica las mismas validaciones de publicación (incluida fecha no futura). Edición y retiro generan eventos de auditoría con actor, entidad y fecha; desde V10 se guardan los valores anteriores y nuevos en los expedientes activos vinculados. No se reconstruyen versiones que nunca se almacenaron.
 
 ## Retiro e historial
 
@@ -36,7 +36,7 @@ Retirar cambia el estado a `WITHDRAWN`, sin borrar filas ni relaciones. No signi
 
 El catálogo general excluye retirados, incluso con `status=WITHDRAWN`. El detalle de una publicación retirada devuelve 404. Su información permanece en `/mine`. Los reclamos históricos conservan sus reglas de visibilidad.
 
-Solo pueden editarse o retirarse hallazgos AVAILABLE y extravíos ACTIVE. Un reclamo PENDING o ACCEPTED bloquea ambas operaciones con 409, incluso si el extravío está vinculado al reclamo. Primero se debe rechazar o cancelar según los permisos existentes. Tampoco se permite recuperar, delegar, marcar oficina o reclamar publicaciones retiradas. Las publicaciones RETURNED/RECOVERED son finales.
+Solo pueden editarse o retirarse hallazgos AVAILABLE y extravíos ACTIVE. Desde la etapa 2, un reclamo PENDING o ACCEPTED permite corregir la ficha y cambiar su resguardo, conservando el cambio en el expediente. El retiro sigue bloqueado con 409 y las fotos públicas permanecen protegidas mientras exista un reclamo activo. Para retirar se debe rechazar o cancelar según los permisos existentes. Tampoco se permite recuperar, delegar, marcar oficina o reclamar publicaciones retiradas. Las publicaciones RETURNED/RECOVERED son finales.
 
 Las escrituras usan el bloqueo de fila existente; la creación de reclamos toma el mismo bloqueo para evitar que una retirada y un nuevo reclamo tengan éxito simultáneamente. Las operaciones sobre extravíos vinculados usan el bloqueo del extravío.
 

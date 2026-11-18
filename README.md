@@ -51,7 +51,7 @@ Sesión en cookie HttpOnly y protección CSRF habilitada. Servir frontend/API ba
 4. Enviar cookie y token CSRF en cada POST. `GET /auth/me` devuelve la identidad y rol.
 5. `POST /auth/logout` cierra la sesión; requiere CSRF. Los tokens o contraseñas no van en URLs.
 
-Registro y verificación implementados: POST `/auth/register`, `/auth/verify-email` y `/auth/resend-verification`. La cuenta se habilita tras verificar un código de un solo uso. Hay límite local de 30 intentos por IP/minuto. El correo se restringe al dominio exacto `utch.edu.mx`; no se impone el prefijo `a`. El envío se prueba con Mailpit local: SMTP institucional y recuperación de contraseña siguen pendientes. Consulta [cuentas y verificación](docs/accounts.md).
+Registro y verificación implementados: POST `/auth/register`, `/auth/verify-email` y `/auth/resend-verification`. La cuenta se habilita tras verificar un código de un solo uso. Hay límite local de 30 intentos por IP/minuto. El correo se restringe al dominio exacto `utch.edu.mx`; no se impone el prefijo `a`. El envío se prueba con Mailpit local; la recuperación de contraseña está implementada y el SMTP institucional requiere configuración externa. Consulta [cuentas y verificación](docs/accounts.md).
 
 ## API v1
 
@@ -62,7 +62,8 @@ Los catálogos de hallazgos y extravíos devuelven `{items, total, page, pageSiz
 | GET / POST | `/found-items` | Listar / publicar hallazgos |
 | GET | `/found-items/{id}` | Detalle de hallazgo |
 | POST | `/found-items/{id}/office` | Reportante o responsable registra que lo dejó en oficina |
-| POST | `/found-items/{id}/delegate` | Responsable delega a docente o secretaria habilitados |
+| PUT | `/found-items/{id}/custody` | Resguardo manual: conmigo, docente u oficina |
+| POST | `/found-items/{id}/delegate` | Compatibilidad con delegaciones anteriores |
 | POST | `/found-items/{id}/claims` | Crear reclamo |
 | GET | `/claims` | Reclamos propios o gestionados por el usuario; detalles privados y correos de contacto |
 | POST | `/claims/{id}/accept` | Responsable acepta |
@@ -92,13 +93,13 @@ Reclamo:
 {"privateDescription": "Dentro tiene un cuaderno con mi nombre", "lostReportId": null}
 ```
 
-Delegación: `{"responsibleId":"UUID-del-docente-o-secretaria"}`. Solo el responsable actual puede delegar; la transferencia es inmediata y auditada. No se permite delegar al reclamante activo. Un directorio de personal elegible y aceptación de delegaciones quedan pendientes de diseño.
+La API de delegación anterior y el directorio `/responsibles` se conservan por compatibilidad. El nuevo formulario usa resguardo manual con docente por nombre y ubicación; no transfiere la gestión ni necesita una cuenta del docente.
 
 ## Reglas implementadas
 
 - Publicar no implica dejar el objeto en la mesa.
 - Marcar oficina registra actor/fecha; no requiere confirmación de la secretaria ni transfiere responsabilidad.
-- La oficina no es un rol administrativo con acceso global. Un docente o secretaria solo decide sobre hallazgos que le fueron delegados.
+- Un rol docente o secretaría no concede acceso global. Se conserva la gestión de delegaciones anteriores; registrar resguardo manual con docente no asigna revisión ni genera avisos a ese docente.
 - Un reclamo activo por usuario/hallazgo y un único reclamo aceptado o completado por hallazgo, respaldados por índices únicos.
 - Todas las decisiones bloquean primero el hallazgo dentro de una transacción. Dos aceptaciones concurrentes no pueden ganar.
 - Solo el solicitante aceptado confirma recuperación. Confirmar es una declaración del receptor, no prueba independiente de entrega física.
@@ -106,7 +107,7 @@ Delegación: `{"responsibleId":"UUID-del-docente-o-secretaria"}`. Solo el respon
 - Repetir oficina, aceptación vigente o recuperación completada no duplica esos efectos.
 - Cancelar un reclamo aceptado libera la reserva.
 - Un extravío con reclamo activo vinculado se cierra a través de ese reclamo; para recuperación externa se debe cancelar primero.
-- El contacto entre participantes es por correo institucional, accesible a las dos partes desde el reclamo. No hay chat.
+- La coordinación se realiza en los comentarios privados del expediente, con evidencias e historial. El correo se limita a publicaciones e inicio/finalización del reclamo, además de la seguridad de cuenta.
 
 ## Pruebas
 
@@ -124,14 +125,13 @@ El usuario de pruebas debe poder crear tablas. Las migraciones se ejecutan autom
 DEV_PASSWORD='la-clave-del-perfil-dev' python3 scripts/smoke.py
 ```
 
-## Pendiente para completar el MVP
+## Pendiente para el despliegue y la prueba de teléfono
 
-- Restablecimiento de contraseña, administración de roles y límites distribuidos para producción.
-- Conexión SMTP institucional. El trabajador de outbox con reintentos ya funciona en el perfil dev contra Mailpit local.
-- Fotos y almacenamiento de archivos.
-- Búsqueda/filtros, edición/retiro de reportes, directorio para delegar y contrato OpenAPI.
-- Idempotencia de publicación/creación ante reintentos de la PWA (las transiciones críticas ya toleran algunos reintentos).
-- Integración frontend, despliegue HTTPS, backups y política de conservación de datos.
+- Configurar y verificar la entrega de correo mediante SMTP externo.
+- Publicar frontend/API con HTTPS accesible desde el teléfono y comprobar instalación, permiso y recepción real en Android/iPhone.
+- Operación de producción: respaldos privados de base y claves VAPID, conservación de imágenes/historial y límites distribuidos si se utilizan varias instancias.
+
+Fotos, catálogo, edición/retiro, perfil, reclamos, OpenAPI, idempotencia, integración local y notificaciones ya tienen implementación y documentación en los apartados siguientes.
 
 ## Organización por capas
 
@@ -169,7 +169,7 @@ Al ejecutar `./run.sh`, abre el buzón de pruebas en http://localhost:8025. Para
 
 ## Gestión de publicaciones (módulo 2)
 
-Disponibles edición con PUT, retiro con POST `/{id}/withdraw` y listados personales `/found-items/mine` y `/lost-reports/mine`. El retiro conserva el historial como WITHDRAWN y lo oculta del catálogo general. Reclamos activos bloquean edición y retiro. [Reglas, permisos y contrato](docs/publications.md). Importa `postman/Publicaciones.postman_collection.json` para probarlo.
+Disponibles edición con PUT, retiro con POST `/{id}/withdraw` y listados personales `/found-items/mine` y `/lost-reports/mine`. El retiro conserva el historial como WITHDRAWN y lo oculta del catálogo general. Reclamos activos permiten corregir la ficha y cambiar el resguardo, dejando constancia en el expediente; bloquean el retiro y los cambios de fotos públicas. [Reglas, permisos y contrato](docs/publications.md). Importa `postman/Publicaciones.postman_collection.json` para probarlo.
 
 ## Fotografías (módulo 3)
 
@@ -186,3 +186,29 @@ Recuperación y cambio de contraseña, revocación de sesiones, asignación loca
 ## Integración y despliegue (módulo 6)
 
 OpenAPI en `/api/v1/openapi.json`, salud en `/api/v1/health`, CORS por orígenes explícitos e Idempotency-Key para crear publicaciones y reclamos. Incluye Dockerfile y Compose de producción separado. [Guía de integración y despliegue](docs/integration.md). No se publicó el sistema en Internet.
+
+## Base del perfil
+
+La migración V8 prepara alias e información académica opcional sin cambiar la identidad de las cuentas existentes. `GET /api/v1/auth/me` conserva su contrato y añade esos campos privados; su edición se implementará en los siguientes módulos. [Diagnóstico, estructura y alcance del módulo 1](docs/profile-foundation.md).
+
+## Perfil completo
+
+Nombre, alias, datos académicos y fotografía se pueden modificar desde Mi cuenta. La matrícula se muestra cuando coincide el formato admitido del correo del alumno. La migración V9 almacena un avatar por cuenta y conserva el resto de datos. [Contrato y funcionamiento del perfil](docs/profile-editing.md).
+
+## Expediente de reclamo (etapa 2, grupo 1)
+
+Comentarios privados, hasta cinco evidencias JPG/PNG de 5 MiB, solicitud con imágenes atómica y bitácora paginada. El solicitante y el responsable actual acceden al expediente; al rechazar, cancelar o completar queda en lectura. Resguardo con docente es una referencia manual sin cuenta ni transferencia de gestión. El resguardo en oficina no se revierte. Se preservan los registros y responsables anteriores mediante Flyway V10. [API, reglas y pruebas](docs/claim-dossier.md). La estación interna y los avisos opcionales del dispositivo están implementados en los grupos siguientes.
+
+## Notificaciones internas (etapa 2, grupo 2)
+
+Estación personal en `/notificaciones`, campana e indicador de pendientes en Reclamos. Las publicaciones y los eventos del expediente crean avisos transaccionales sin duplicados; los comentarios y pruebas nunca se copian al texto del aviso. Abrir la estación o el expediente no marca avisos como leídos: pulsar uno marca únicamente ese aviso y abre su destino. Limpiar retira solo leídos, sin borrar historial. Flyway V11 presenta los reclamos anteriores aún activos una sola vez. [API, destinatarios y pruebas](docs/notifications.md). El grupo 3 agrega los avisos nativos y recordatorios; [activación](docs/web-push.md).
+
+## Hallazgo desde un extravío y correo por hitos (grupo 4)
+
+Yo lo encontré conserva el reporte de origen y publica ficha, foto obligatoria y resguardo juntos con `POST /found-items/publish`. Al terminar se avisa al dueño como **posible coincidencia**, sin iniciar ni cerrar un reclamo automáticamente. El dueño consulta los posibles hallazgos desde su reporte y puede reclamar con su extravío preseleccionado. Los comentarios y acuerdos permanecen en la app; los correos se generan solo al publicar, iniciar o finalizar un reclamo, además de verificación/recuperación de cuenta. `FRONTEND_URL` configura sus enlaces; el perfil dev usa `http://localhost:5173` por defecto. [Contrato](docs/found-matches.md) y [validación](docs/validation-group4.md). Web Push real con la app cerrada ya fue verificado en Chrome; queda el teléfono físico con HTTPS.
+
+## Avisos del dispositivo y recordatorios (grupo 3)
+
+Desde la campana, abre **Avisos en este dispositivo** y pulsa **Activar notificaciones**. El permiso es voluntario. Web Push avisa aunque no haya ventanas de la app abiertas, con resumen genérico y apertura del aviso autorizado; mostrarlo no marca pendientes como leídos. Cerrar sesión silencia y desvincula ese dispositivo. Los recordatorios se configuran en 0, 1 o 2 al día, a las 10:00/18:00 de Chihuahua, solo si existe trabajo pendiente. No aumentan el contador de la bandeja.
+
+Flyway V13 conserva los datos y añade suscripciones, preferencias y cola. Las claves VAPID se generan una vez en `.local/` (privado e ignorado por Git); conservarlas al respaldar. Docker de producción incluye volumen persistente para ellas. **154 pruebas Java sin fallos** y recepción cifrada real en Chrome con cero ventanas abiertas. La validación física de Android/iPhone requiere una dirección HTTPS accesible desde el teléfono. [API, configuración y recorrido de pruebas](docs/web-push.md).

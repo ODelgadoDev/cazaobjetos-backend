@@ -2,7 +2,7 @@
 
 ## Contrato de la API
 
-`GET /api/v1/openapi.json` entrega OpenAPI 3.0.3 sin iniciar sesión: 36 rutas y 44 operaciones. También puedes importar `src/main/resources/openapi.json` directamente en Postman. No incluye Swagger UI. El contrato cubre autenticación, cuentas, catálogos, publicaciones, fotos, directorio y reclamos. Las reglas detalladas de permisos siguen documentadas en las guías de cada módulo.
+`GET /api/v1/openapi.json` entrega OpenAPI 3.0.3 sin iniciar sesión: 38 rutas y 49 operaciones. También puedes importar `src/main/resources/openapi.json` directamente en Postman. No incluye Swagger UI. El contrato cubre autenticación, cuentas, catálogos, publicaciones, fotos, directorio y reclamos. Las reglas detalladas de permisos siguen documentadas en las guías de cada módulo.
 
 `GET /api/v1/health` comprueba API y PostgreSQL: 200 `{"status":"UP"}` o 503 `{"status":"DOWN"}`, sin exponer credenciales ni detalles internos. No comprueba entrega SMTP ni sustituye la monitorización del proveedor.
 

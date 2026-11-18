@@ -17,11 +17,17 @@ public class ItemService {
     private final ItemDataService data;
     private final UserDataService users;
     private final ItemEventService events;
+    private final ClaimJournalService journal;
+    private final NotificationEventService notifications;
+    private final MilestoneEmailService milestoneMail;
 
-    public ItemService(ItemDataService data, UserDataService users, ItemEventService events) {
+    public ItemService(ItemDataService data, UserDataService users, ItemEventService events, ClaimJournalService journal, NotificationEventService notifications, MilestoneEmailService milestoneMail) {
         this.data = data;
         this.users = users;
         this.events = events;
+        this.journal = journal;
+        this.notifications = notifications;
+        this.milestoneMail=milestoneMail;
     }
 
     private void available(FoundItemModel item) {
@@ -47,13 +53,14 @@ public class ItemService {
         var item = data.lockItem(id);
         responsible(item, actor);
         available(item);
-        require(!data.hasActiveClaims(id), HttpStatus.CONFLICT, "Resuelve o cancela los reclamos activos antes de editar");
+        var before=item.toResponseDto();
         item.setTitle(request.title().strip());
         item.setDescription(request.description().strip());
         item.setCategory(request.category());
         item.setFoundLocation(request.location().strip());
         item.setFoundOn(request.occurredOn());
         events.audit(actor, id, "FOUND_EDITED");
+        journal.foundEvent(item,actor,ClaimActivityKind.PUBLICATION_EDITED,"Se actualizó la ficha del hallazgo.",Map.of("before",before,"after",item.toResponseDto()));
     }
     public void withdrawFound(UUID actor, UUID id) {
         var item = data.lockItem(id);
@@ -67,23 +74,26 @@ public class ItemService {
     private void editableLoss(UUID actor, LostReportModel loss) {
         require(actor.equals(loss.getOwnerId()), HttpStatus.FORBIDDEN, "Solo el dueño puede modificar el extravío");
         require(loss.getStatus() == LostStatus.ACTIVE, HttpStatus.CONFLICT, "El extravío no está activo");
-        require(!data.hasActiveLinkedClaim(loss.getId()), HttpStatus.CONFLICT, "Resuelve o cancela el reclamo vinculado primero");
+
     }
     public void editLost(UUID actor, UUID id, ReportRequestDto request) {
         var loss = data.lockLoss(id);
         editableLoss(actor, loss);
+        var before=loss.toResponseDto();
         loss.setTitle(request.title().strip());
         loss.setDescription(request.description().strip());
         loss.setCategory(request.category());
         loss.setLostLocation(request.location().strip());
         loss.setLostOn(request.occurredOn());
         events.audit(actor, id, "LOSS_EDITED");
+        journal.lossEvent(id,actor,before,loss.toResponseDto());
     }
     public void withdrawLost(UUID actor, UUID id) {
         var loss = data.lockLoss(id);
         require(actor.equals(loss.getOwnerId()), HttpStatus.FORBIDDEN, "Solo el dueño puede retirar el extravío");
         if (loss.getStatus() == LostStatus.WITHDRAWN) return;
         editableLoss(actor, loss);
+        require(!data.hasActiveLinkedClaim(id),HttpStatus.CONFLICT,"Resuelve o cancela el reclamo vinculado antes de retirar");
         loss.setStatus(LostStatus.WITHDRAWN);
         events.audit(actor, id, "LOSS_WITHDRAWN");
     }
@@ -93,23 +103,45 @@ public class ItemService {
     public UUID createFound(UUID actor, ReportRequestDto request) {
         UUID id = data.createFound(actor, request).getId();
         events.audit(actor, id, "FOUND_PUBLISHED");
+        notifications.published(actor,id,true);milestoneMail.published(actor,id,true);
         return id;
     }
     public UUID createLost(UUID actor, ReportRequestDto request) {
         UUID id = data.createLost(actor, request).getId();
         events.audit(actor, id, "LOSS_PUBLISHED");
+        notifications.published(actor,id,false);milestoneMail.published(actor,id,false);
         return id;
     }
     public void office(UUID actor, UUID id) {
-        FoundItemModel item = data.lockItem(id);
-        available(item);
-        require(actor.equals(item.getReporterId()) || actor.equals(item.getResponsibleId()),
-            HttpStatus.FORBIDDEN, "Solo el reportante o responsable puede registrar el resguardo");
-        if (item.getCustody() == CustodyStatus.OFFICE) return;
-        item.setCustody(CustodyStatus.OFFICE);
-        item.setOfficeMarkedBy(actor);
-        item.setOfficeMarkedAt(Instant.now());
-        events.audit(actor, id, "LEFT_AT_OFFICE");
+        var item=data.lockItem(id);
+        available(item);custodyActor(item,actor);
+        if(item.getCustody()==CustodyStatus.OFFICE)return;
+        applyCustody(actor,item,new CustodyRequestDto(CustodyStatus.OFFICE,null,"Oficina de profesores · edificio I"));
+    }
+    private void custodyActor(FoundItemModel item,UUID actor) {
+        require(actor.equals(item.getReporterId())||actor.equals(item.getResponsibleId()),HttpStatus.FORBIDDEN,"Solo quien encontró el objeto o su responsable puede cambiar el resguardo");
+    }
+    private String text(String raw) {
+        if(raw==null||raw.isBlank())return null;
+        String value=raw.strip();require(value.codePoints().noneMatch(Character::isISOControl),HttpStatus.BAD_REQUEST,"El resguardo debe escribirse en una sola línea");return value;
+    }
+    public void custody(UUID actor,UUID id,CustodyRequestDto request) {
+        var item=data.lockItem(id);available(item);custodyActor(item,actor);applyCustody(actor,item,request);
+    }
+    private void applyCustody(UUID actor,FoundItemModel item,CustodyRequestDto request) {
+        require(request.custody()!=null,HttpStatus.BAD_REQUEST,"Selecciona el resguardo");
+        require(item.getCustody()!=CustodyStatus.OFFICE||request.custody()==CustodyStatus.OFFICE,HttpStatus.CONFLICT,"El objeto permanece en oficina hasta su entrega");
+        String teacher=request.custody()==CustodyStatus.WITH_TEACHER?text(request.teacherName()):null;
+        String location=request.custody()==CustodyStatus.WITH_FINDER?null:text(request.location());
+        require(request.custody()!=CustodyStatus.WITH_TEACHER||teacher!=null,HttpStatus.BAD_REQUEST,"Escribe con qué docente quedó el objeto");
+        require(teacher==null||teacher.length()<=120,HttpStatus.BAD_REQUEST,"El nombre del docente admite 120 caracteres");
+        require(location==null||location.length()<=200,HttpStatus.BAD_REQUEST,"La ubicación admite 200 caracteres");
+        if(item.getCustody()==request.custody()&&Objects.equals(item.getTeacherName(),teacher)&&Objects.equals(item.getCustodyLocation(),location))return;
+        var before=item.toResponseDto();item.setCustody(request.custody());item.setTeacherName(teacher);item.setCustodyLocation(location);
+        item.setCustodyMarkedBy(actor);item.setCustodyMarkedAt(Instant.now());
+        if(request.custody()==CustodyStatus.OFFICE&&item.getOfficeMarkedAt()==null) {item.setOfficeMarkedBy(actor);item.setOfficeMarkedAt(Instant.now());}
+        events.audit(actor,item.getId(),request.custody()==CustodyStatus.OFFICE?"LEFT_AT_OFFICE":"CUSTODY_CHANGED");
+        journal.foundEvent(item,actor,ClaimActivityKind.CUSTODY_CHANGED,"Se actualizó el lugar de resguardo. La gestión del reclamo se conserva.",Map.of("before",before,"after",item.toResponseDto()));
     }
     public void delegate(UUID actor, UUID id, UUID target) {
         FoundItemModel item = data.lockItem(id);
@@ -122,6 +154,7 @@ public class ItemService {
         require(!data.hasActiveClaim(id, target), HttpStatus.CONFLICT, "No se puede delegar al reclamante");
         item.setResponsibleId(target);
         events.audit(actor, id, "DELEGATED_TO_" + target);
+        journal.foundEvent(item,actor,ClaimActivityKind.DELEGATED,"Se cambió el responsable de un hallazgo del flujo anterior.",Map.of("responsibleId",target));
     }
     public UUID claim(UUID actor, UUID id, ClaimRequestDto request) {
         FoundItemModel item = data.lockItem(id);
@@ -135,9 +168,14 @@ public class ItemService {
         }
         UUID claimId = data.createClaim(actor, id, request).getId();
         events.audit(actor, claimId, "CLAIM_SUBMITTED");
+        journal.event(claimId,actor,ClaimActivityKind.SUBMITTED,"El solicitante abrió el reclamo.",Map.of("foundItem",item.toResponseDto()));
         return claimId;
     }
-    public void decide(UUID actor, UUID claimId, String action) {
+    public void decide(UUID actor, UUID claimId, String action) { decide(actor,claimId,action,null); }
+    public void decide(UUID actor, UUID claimId, String action, String rawReason) {
+        String reason=rawReason==null||rawReason.isBlank()?null:rawReason.strip();
+        require(reason==null||reason.length()<=2000,HttpStatus.BAD_REQUEST,"El motivo admite 2000 caracteres");
+        require(reason==null||reason.codePoints().noneMatch(c->Character.isISOControl(c)&&c!='\n'&&c!='\r'&&c!='\t'),HttpStatus.BAD_REQUEST,"El motivo contiene caracteres inválidos");
         // Lock parent before loading claim state, including under concurrent completion.
         FoundItemModel item = data.lockItem(data.itemIdForClaim(claimId));
         ClaimModel claim = data.claim(claimId);
@@ -152,9 +190,8 @@ public class ItemService {
                 claim.setStatus(ClaimStatus.COMPLETED);
                 claim.setCompletedAt(Instant.now());
                 item.setStatus(FoundStatus.RETURNED);
-                data.closeOtherClaims(item.getId());
+                data.closeOtherClaims(item.getId()).forEach(closed -> journal.event(closed.getId(),null,ClaimActivityKind.CLOSED,"El hallazgo se entregó y esta solicitud quedó cerrada.",null));
                 if (claim.getLostReportId() != null) recover(data.lockLoss(claim.getLostReportId()));
-                events.recovered(item, users.user(item.getReporterId()).getEmail());
             }
             case "accept" -> {
                 responsible(item, actor);
@@ -182,6 +219,9 @@ public class ItemService {
             default -> throw new BusinessException(HttpStatus.NOT_FOUND, "Acción no disponible");
         }
         events.audit(actor, claimId, "CLAIM_" + action.toUpperCase(Locale.ROOT));
+        var kind=switch(action) {case "accept"->ClaimActivityKind.ACCEPTED;case "reject"->ClaimActivityKind.REJECTED;case "cancel"->ClaimActivityKind.CANCELLED;default->ClaimActivityKind.COMPLETED;};
+        var message=switch(action) {case "accept"->"El responsable aceptó el reclamo. Pueden coordinar la entrega.";case "reject"->"El responsable rechazó el reclamo.";case "cancel"->"El solicitante canceló el reclamo.";default->"El solicitante confirmó que recibió el objeto. Expediente finalizado.";};
+        journal.event(claimId,actor,kind,reason==null?message:message+"\nMotivo: "+reason,Map.of("foundItem",item.toResponseDto()));
     }
     public void recoverLost(UUID actor, UUID id) {
         LostReportModel loss = data.lockLoss(id);

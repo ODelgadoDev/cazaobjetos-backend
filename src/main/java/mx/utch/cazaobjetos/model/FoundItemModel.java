@@ -52,6 +52,22 @@ public class FoundItemModel {
     @Column(name = "created_at")
     private Instant createdAt;
 
+    @Column(name="teacher_name") private String teacherName;
+    @Column(name="custody_location") private String custodyLocation;
+    @Column(name="custody_marked_by") private UUID custodyMarkedBy;
+    @Column(name="custody_marked_at") private Instant custodyMarkedAt;
+    public String getTeacherName() { return teacherName; }
+    public void setTeacherName(String value) { teacherName=value; }
+    public String getCustodyLocation() { return custodyLocation; }
+    public void setCustodyLocation(String value) { custodyLocation=value; }
+    public UUID getCustodyMarkedBy() { return custodyMarkedBy; }
+    public void setCustodyMarkedBy(UUID value) { custodyMarkedBy=value; }
+    public Instant getCustodyMarkedAt() { return custodyMarkedAt; }
+    public void setCustodyMarkedAt(Instant value) { custodyMarkedAt=value; }
+
+    @Column(name="source_lost_report_id") private UUID sourceLostReportId;
+    public UUID getSourceLostReportId() {return sourceLostReportId;}
+    public void setSourceLostReportId(UUID value) {sourceLostReportId=value;}
     public FoundItemModel() {}
 
     public UUID getId() { return id; }
@@ -94,6 +110,6 @@ public class FoundItemModel {
     public void setCreatedAt(Instant createdAt) { this.createdAt = createdAt; }
 
     public FoundItemResponseDto toResponseDto() {
-        return new FoundItemResponseDto(id, reporterId, responsibleId, title, description, category, foundLocation, foundOn, status, custody, officeMarkedBy, officeMarkedAt, createdAt);
+        return new FoundItemResponseDto(id, reporterId, responsibleId, title, description, category, foundLocation, foundOn, status, custody, officeMarkedBy, officeMarkedAt, createdAt, teacherName, custodyLocation, custodyMarkedBy, custodyMarkedAt, sourceLostReportId);
     }
 }

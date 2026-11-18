@@ -18,6 +18,7 @@ public class ClaimQueryService {
         var claim=data.detail(actor,id);
         var found=items.found(claim.foundItemId());
         return new ClaimDetailDto(claim,found.toResponseDto(),DirectoryDataService.person(users.user(found.getResponsibleId())),
-            DirectoryDataService.person(users.user(claim.claimantId())));
+            DirectoryDataService.person(users.user(claim.claimantId())),
+            found.getStatus()==mx.utch.cazaobjetos.enums.FoundStatus.AVAILABLE&&java.util.Set.of(mx.utch.cazaobjetos.enums.ClaimStatus.PENDING,mx.utch.cazaobjetos.enums.ClaimStatus.ACCEPTED).contains(claim.status()));
     }
 }

@@ -57,7 +57,14 @@ public class PhotoService {
     public void delete(boolean found,UUID parent,UUID id,UUID actor) {
         access(found,parent,actor,true);photos.delete(scoped(found,parent,id));events.audit(actor,parent,"PHOTO_DELETED_"+id);
     }
+    public void checkUpload(boolean found, UUID parent, UUID actor) {
+        access(found,parent,actor,true);
+        require(photos.count(parent)<3,HttpStatus.CONFLICT,"Máximo 3 fotos por publicación");
+    }
     public PhotoResponseDto upload(boolean found,UUID parent,UUID actor,MultipartFile file) {
+        return upload(found,parent,actor,file,false);
+    }
+    public PhotoResponseDto upload(boolean found,UUID parent,UUID actor,MultipartFile file,boolean referenceImage) {
         access(found,parent,actor,true);
         require(photos.count(parent)<3,HttpStatus.CONFLICT,"Máximo 3 fotos por publicación");
         require(!file.isEmpty(),HttpStatus.BAD_REQUEST,"Selecciona una imagen");
@@ -65,9 +72,9 @@ public class PhotoService {
         var image=normalize(file);
         var photo=new PublicationPhotoModel();photo.setId(UUID.randomUUID());
         if(found) photo.setFoundItemId(parent);else photo.setLostReportId(parent);
-        photo.setContentType(image.type());photo.setContent(image.bytes());photo.setSizeBytes(image.bytes().length);photo.setCreatedAt(Instant.now());
+        photo.setContentType(image.type());photo.setContent(image.bytes());photo.setSizeBytes(image.bytes().length);photo.setCreatedAt(Instant.now());photo.setReferenceImage(!found && referenceImage);
         photos.save(photo);events.audit(actor,parent,"PHOTO_ADDED_"+photo.getId());
-        return new PhotoResponseDto(photo.getId(),photo.getContentType(),photo.getSizeBytes(),photo.getCreatedAt());
+        return new PhotoResponseDto(photo.getId(),photo.getContentType(),photo.getSizeBytes(),photo.getCreatedAt(),photo.isReferenceImage());
     }
     private record Image(String type,byte[] bytes) {}
     private Image normalize(MultipartFile file) {

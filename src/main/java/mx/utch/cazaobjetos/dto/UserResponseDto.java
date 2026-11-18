@@ -9,4 +9,12 @@ public record UserResponseDto(
         String email,
         String displayName,
         UserRole role,
-        Instant createdAt) {}
+        Instant createdAt,
+        String alias,
+        String classroom,
+        String groupName,
+        String course,
+        String degree,
+        String building,
+        String studentNumber,
+        UUID avatarVersion) {}

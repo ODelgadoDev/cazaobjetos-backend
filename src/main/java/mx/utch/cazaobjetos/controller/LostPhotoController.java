@@ -5,18 +5,26 @@ import org.springframework.http.*;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 import mx.utch.cazaobjetos.dto.PhotoResponseDto;
+import mx.utch.cazaobjetos.dto.ImportPhotoRequestDto;
+import jakarta.validation.Valid;
 import mx.utch.cazaobjetos.service.*;
 @RestController
 @RequestMapping("${url.api}/lost-reports/{parent}/photos")
 public class LostPhotoController {
     private final PhotoService photos;
     private final UserDataService users;
-    public LostPhotoController(PhotoService photos,UserDataService users) { this.photos=photos;this.users=users; }
+    private final PhotoImportService imports;
+    public LostPhotoController(PhotoService photos,UserDataService users,PhotoImportService imports) { this.photos=photos;this.users=users;this.imports=imports; }
     @GetMapping
     public List<PhotoResponseDto> list(@PathVariable UUID parent,Principal principal) { return photos.list(false,parent,users.userId(principal.getName())); }
     @PostMapping(consumes=MediaType.MULTIPART_FORM_DATA_VALUE)
-    public ResponseEntity<PhotoResponseDto> upload(@PathVariable UUID parent,Principal principal,@RequestParam("file") MultipartFile file) {
-        return ResponseEntity.status(201).body(photos.upload(false,parent,users.userId(principal.getName()),file));
+    public ResponseEntity<PhotoResponseDto> upload(@PathVariable UUID parent,Principal principal,@RequestParam("file") MultipartFile file,@RequestParam(defaultValue="false") boolean referenceImage) {
+        return ResponseEntity.status(201).body(photos.upload(false,parent,users.userId(principal.getName()),file,referenceImage));
+    }
+    @PostMapping("/import")
+    public ResponseEntity<PhotoResponseDto> importPhoto(@PathVariable UUID parent,Principal principal,
+            @Valid @RequestBody ImportPhotoRequestDto request) {
+        return ResponseEntity.status(201).body(imports.importPhoto(parent,users.userId(principal.getName()),request));
     }
     @GetMapping("/{id}")
     public ResponseEntity<byte[]> content(@PathVariable UUID parent,@PathVariable UUID id,Principal principal) {

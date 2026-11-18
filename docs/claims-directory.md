@@ -1,6 +1,6 @@
 # Módulo 4: directorio y consultas de reclamos
 
-Todas las rutas requieren sesión. El directorio sirve para seleccionar responsables al delegar; no crea cuentas ni concede roles. La secretaria del director se representa con SECRETARY. Un alumno no puede registrarse con ese rol por su cuenta.
+Todas las rutas requieren sesión. **Actualización etapa 2:** el directorio y la delegación se conservan para compatibilidad con registros anteriores; la interfaz nueva registra al docente como resguardo manual, sin asignarle la revisión. [Expediente y comentarios](claim-dossier.md). El directorio sirve para seleccionar responsables al delegar; no crea cuentas ni concede roles. La secretaria del director se representa con SECRETARY. Un alumno no puede registrarse con ese rol por su cuenta.
 
 ## Directorio
 
@@ -49,11 +49,12 @@ El endpoint anterior `GET /api/v1/claims?page=0` conserva su array de 20 registr
   claim: ClaimResponseDto,
   foundItem: FoundItemResponseDto,
   responsible: { id, displayName, email, role },
-  claimant: { id, displayName, email, role }
+  claimant: { id, displayName, email, role },
+  canContribute: boolean
 }
 ```
 
-No devuelve información del resto de reclamos ni un historial de datos personales anteriores. Usa los correos para el contacto institucional. Para fotos, usa los endpoints del módulo 3: las reglas de visibilidad de publicaciones retiradas siguen aplicando.
+No devuelve información del resto de reclamos ni un historial de datos personales anteriores. La coordinación se realiza en comentarios privados; los correos siguen en el DTO por compatibilidad. Para fotos, usa los endpoints del módulo 3: las reglas de visibilidad de publicaciones retiradas siguen aplicando.
 
 Solo el solicitante o el responsable actual tiene acceso; reclamo inexistente o ajeno devuelve 404. El reportante que delegó deja de ver el reclamo salvo que sea participante por otra razón. El nuevo responsable lo ve en RECEIVED. Los reclamos cerrados permanecen consultables por esas partes, aunque el hallazgo se retire después. El DTO de hallazgo dentro del detalle aporta contexto a ese historial; no convierte la publicación retirada en pública.
 

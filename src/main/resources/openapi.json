@@ -16,6 +16,661 @@
     }
   ],
   "paths": {
+    "/notifications": {
+      "get": {
+        "summary": "Mis avisos visibles sin marcarlos como leídos",
+        "operationId": "get_notifications",
+        "responses": {
+          "200": {
+            "description": "Operación correcta",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PageNotificationResponseDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Entrada inválida"
+          },
+          "401": {
+            "description": "Sesión requerida o revocada"
+          },
+          "403": {
+            "description": "Sin permiso o CSRF inválido"
+          },
+          "404": {
+            "description": "Recurso inexistente o no visible"
+          },
+          "409": {
+            "description": "Estado incompatible o clave reutilizada con otros datos"
+          },
+          "429": {
+            "description": "Límite de intentos; Retry-After: 60"
+          }
+        },
+        "parameters": [
+          {
+            "name": "page",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 10000,
+              "default": 0
+            }
+          },
+          {
+            "name": "pageSize",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 100,
+              "default": 20
+            }
+          },
+          {
+            "name": "filter",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "allOf": [
+                {
+                  "$ref": "#/components/schemas/NotificationFilter"
+                }
+              ],
+              "default": "ALL"
+            }
+          }
+        ]
+      }
+    },
+    "/notifications/summary": {
+      "get": {
+        "summary": "Contadores personales de pendientes y total visible",
+        "operationId": "get_notifications_summary",
+        "responses": {
+          "200": {
+            "description": "Operación correcta",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NotificationSummaryDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Entrada inválida"
+          },
+          "401": {
+            "description": "Sesión requerida o revocada"
+          },
+          "403": {
+            "description": "Sin permiso o CSRF inválido"
+          },
+          "404": {
+            "description": "Recurso inexistente o no visible"
+          },
+          "409": {
+            "description": "Estado incompatible o clave reutilizada con otros datos"
+          },
+          "429": {
+            "description": "Límite de intentos; Retry-After: 60"
+          }
+        }
+      }
+    },
+    "/notifications/{id}/read": {
+      "post": {
+        "summary": "Marcar solo el aviso pulsado como leído",
+        "operationId": "post_notifications_id_read",
+        "responses": {
+          "200": {
+            "description": "Operación correcta",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NotificationResponseDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Entrada inválida"
+          },
+          "401": {
+            "description": "Sesión requerida o revocada"
+          },
+          "403": {
+            "description": "Sin permiso o CSRF inválido"
+          },
+          "404": {
+            "description": "Recurso inexistente o no visible"
+          },
+          "409": {
+            "description": "Estado incompatible o clave reutilizada con otros datos"
+          },
+          "429": {
+            "description": "Límite de intentos; Retry-After: 60"
+          }
+        },
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "X-CSRF-TOKEN",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ]
+      }
+    },
+    "/notifications/clear-read": {
+      "post": {
+        "summary": "Retirar únicamente avisos ya leídos sin borrar su historial",
+        "operationId": "post_notifications_clear_read",
+        "responses": {
+          "200": {
+            "description": "Operación correcta",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NotificationClearDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Entrada inválida"
+          },
+          "401": {
+            "description": "Sesión requerida o revocada"
+          },
+          "403": {
+            "description": "Sin permiso o CSRF inválido"
+          },
+          "404": {
+            "description": "Recurso inexistente o no visible"
+          },
+          "409": {
+            "description": "Estado incompatible o clave reutilizada con otros datos"
+          },
+          "429": {
+            "description": "Límite de intentos; Retry-After: 60"
+          }
+        },
+        "parameters": [
+          {
+            "name": "X-CSRF-TOKEN",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ]
+      }
+    },
+    "/lost-reports/{id}/matches": {
+      "get": {
+        "summary": "Posibles hallazgos del reporte, solo para su dueño",
+        "operationId": "get_lost_reports_id_matches",
+        "responses": {
+          "200": {
+            "description": "Operación correcta",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PageFoundItemResponseDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Entrada inválida"
+          },
+          "401": {
+            "description": "Sesión requerida o revocada"
+          },
+          "403": {
+            "description": "Sin permiso o CSRF inválido"
+          },
+          "404": {
+            "description": "Recurso inexistente o no visible"
+          },
+          "409": {
+            "description": "Estado incompatible o clave reutilizada con otros datos"
+          },
+          "429": {
+            "description": "Límite de intentos; Retry-After: 60"
+          }
+        },
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 10000,
+              "default": 0
+            }
+          },
+          {
+            "name": "pageSize",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 100,
+              "default": 20
+            }
+          }
+        ]
+      }
+    },
+    "/found-items/publish": {
+      "post": {
+        "summary": "Publicar hallazgo completo con foto, resguardo y posible extravío de origen en una sola transacción",
+        "operationId": "post_found_items_publish",
+        "responses": {
+          "201": {
+            "description": "Operación correcta",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/IdResponseDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Entrada inválida"
+          },
+          "401": {
+            "description": "Sesión requerida o revocada"
+          },
+          "403": {
+            "description": "Sin permiso o CSRF inválido"
+          },
+          "404": {
+            "description": "Recurso inexistente o no visible"
+          },
+          "409": {
+            "description": "Estado incompatible o clave reutilizada con otros datos"
+          },
+          "429": {
+            "description": "Límite de intentos; Retry-After: 60"
+          },
+          "413": {
+            "description": "Foto de más de 5 MiB"
+          },
+          "415": {
+            "description": "Foto no válida como JPEG/PNG"
+          }
+        },
+        "parameters": [
+          {
+            "name": "X-CSRF-TOKEN",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "Idempotency-Key",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "pattern": "^[A-Za-z0-9._:-]{8,100}$",
+              "description": "Misma clave, usuario, ruta y datos: mismo ID. Datos diferentes: 409."
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "request",
+                  "file"
+                ],
+                "properties": {
+                  "request": {
+                    "$ref": "#/components/schemas/FoundPublicationRequestDto"
+                  },
+                  "file": {
+                    "type": "string",
+                    "format": "binary"
+                  }
+                }
+              },
+              "encoding": {
+                "request": {
+                  "contentType": "application/json"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/push/config": {
+      "get": {
+        "summary": "Configuración pública de Web Push para la sesión",
+        "operationId": "get_push_config",
+        "responses": {
+          "200": {
+            "description": "Operación correcta",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PushConfigDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Entrada inválida"
+          },
+          "401": {
+            "description": "Sesión requerida o revocada"
+          },
+          "403": {
+            "description": "Sin permiso o CSRF inválido"
+          },
+          "404": {
+            "description": "Recurso inexistente o no visible"
+          },
+          "409": {
+            "description": "Estado incompatible o clave reutilizada con otros datos"
+          },
+          "429": {
+            "description": "Límite de intentos; Retry-After: 60"
+          }
+        }
+      }
+    },
+    "/push/subscriptions": {
+      "post": {
+        "summary": "Vincular el dispositivo a la cuenta de la sesión",
+        "operationId": "post_push_subscriptions",
+        "responses": {
+          "200": {
+            "description": "Operación correcta",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PushSubscriptionResponseDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Entrada inválida"
+          },
+          "401": {
+            "description": "Sesión requerida o revocada"
+          },
+          "403": {
+            "description": "Sin permiso o CSRF inválido"
+          },
+          "404": {
+            "description": "Recurso inexistente o no visible"
+          },
+          "409": {
+            "description": "Estado incompatible o clave reutilizada con otros datos"
+          },
+          "429": {
+            "description": "Límite de intentos; Retry-After: 60"
+          }
+        },
+        "parameters": [
+          {
+            "name": "X-CSRF-TOKEN",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PushSubscriptionRequestDto"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/push/subscriptions/{id}": {
+      "delete": {
+        "summary": "Desactivar solo el dispositivo autorizado",
+        "operationId": "delete_push_subscriptions_id",
+        "responses": {
+          "204": {
+            "description": "Operación correcta"
+          },
+          "400": {
+            "description": "Entrada inválida"
+          },
+          "401": {
+            "description": "Sesión requerida o revocada"
+          },
+          "403": {
+            "description": "Sin permiso o CSRF inválido"
+          },
+          "404": {
+            "description": "Recurso inexistente o no visible"
+          },
+          "409": {
+            "description": "Estado incompatible o clave reutilizada con otros datos"
+          },
+          "429": {
+            "description": "Límite de intentos; Retry-After: 60"
+          }
+        },
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "X-CSRF-TOKEN",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ]
+      }
+    },
+    "/push/test": {
+      "post": {
+        "summary": "Programar una prueba en este dispositivo, máximo una por minuto",
+        "operationId": "post_push_test",
+        "responses": {
+          "202": {
+            "description": "Operación correcta",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/IdResponseDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Entrada inválida"
+          },
+          "401": {
+            "description": "Sesión requerida o revocada"
+          },
+          "403": {
+            "description": "Sin permiso o CSRF inválido"
+          },
+          "404": {
+            "description": "Recurso inexistente o no visible"
+          },
+          "409": {
+            "description": "Estado incompatible o clave reutilizada con otros datos"
+          },
+          "429": {
+            "description": "Límite de intentos; Retry-After: 60"
+          }
+        },
+        "parameters": [
+          {
+            "name": "X-CSRF-TOKEN",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PushTestRequestDto"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/push/preferences": {
+      "get": {
+        "summary": "Preferencias de recordatorios del usuario",
+        "operationId": "get_push_preferences",
+        "responses": {
+          "200": {
+            "description": "Operación correcta",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PushPreferenceDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Entrada inválida"
+          },
+          "401": {
+            "description": "Sesión requerida o revocada"
+          },
+          "403": {
+            "description": "Sin permiso o CSRF inválido"
+          },
+          "404": {
+            "description": "Recurso inexistente o no visible"
+          },
+          "409": {
+            "description": "Estado incompatible o clave reutilizada con otros datos"
+          },
+          "429": {
+            "description": "Límite de intentos; Retry-After: 60"
+          }
+        }
+      },
+      "put": {
+        "summary": "Elegir cero, uno o dos recordatorios del servidor",
+        "operationId": "put_push_preferences",
+        "responses": {
+          "200": {
+            "description": "Operación correcta",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PushPreferenceDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Entrada inválida"
+          },
+          "401": {
+            "description": "Sesión requerida o revocada"
+          },
+          "403": {
+            "description": "Sin permiso o CSRF inválido"
+          },
+          "404": {
+            "description": "Recurso inexistente o no visible"
+          },
+          "409": {
+            "description": "Estado incompatible o clave reutilizada con otros datos"
+          },
+          "429": {
+            "description": "Límite de intentos; Retry-After: 60"
+          }
+        },
+        "parameters": [
+          {
+            "name": "X-CSRF-TOKEN",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PushPreferenceRequestDto"
+              }
+            }
+          }
+        }
+      }
+    },
     "/found-items": {
       "get": {
         "summary": "Catálogo general sin retirados",
@@ -605,7 +1260,7 @@
     },
     "/found-items/{id}/claims": {
       "post": {
-        "summary": "Solicitar reclamo",
+        "summary": "Solicitar reclamo con evidencias opcionales guardadas atómicamente",
         "operationId": "post_found_items_id_claims",
         "responses": {
           "201": {
@@ -635,6 +1290,12 @@
           },
           "429": {
             "description": "Límite de intentos; Retry-After: 60"
+          },
+          "413": {
+            "description": "Más de 5 MiB por imagen / 26 MiB por petición"
+          },
+          "415": {
+            "description": "Solo evidencias JPEG/PNG"
           }
         },
         "parameters": [
@@ -672,6 +1333,90 @@
             "application/json": {
               "schema": {
                 "$ref": "#/components/schemas/ClaimRequestDto"
+              }
+            },
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "request"
+                ],
+                "properties": {
+                  "request": {
+                    "$ref": "#/components/schemas/ClaimRequestDto"
+                  },
+                  "files": {
+                    "type": "array",
+                    "maxItems": 5,
+                    "items": {
+                      "type": "string",
+                      "format": "binary"
+                    }
+                  }
+                }
+              },
+              "encoding": {
+                "request": {
+                  "contentType": "application/json"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/found-items/{id}/custody": {
+      "put": {
+        "summary": "Actualizar resguardo sin transferir gestión; oficina no se revierte",
+        "operationId": "put_found_items_id_custody",
+        "responses": {
+          "204": {
+            "description": "Operación correcta"
+          },
+          "400": {
+            "description": "Entrada inválida"
+          },
+          "401": {
+            "description": "Sesión requerida o revocada"
+          },
+          "403": {
+            "description": "Sin permiso o CSRF inválido"
+          },
+          "404": {
+            "description": "Recurso inexistente o no visible"
+          },
+          "409": {
+            "description": "Estado incompatible o clave reutilizada con otros datos"
+          },
+          "429": {
+            "description": "Límite de intentos; Retry-After: 60"
+          }
+        },
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "X-CSRF-TOKEN",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CustodyRequestDto"
               }
             }
           }
@@ -760,7 +1505,7 @@
             "description": "Límite de intentos; Retry-After: 60"
           },
           "413": {
-            "description": "Más de 5 MiB por archivo / 6 MiB por petición"
+            "description": "Más de 5 MiB por archivo / 26 MiB por petición"
           },
           "415": {
             "description": "Solo JPEG/PNG"
@@ -1519,7 +2264,7 @@
             "description": "Límite de intentos; Retry-After: 60"
           },
           "413": {
-            "description": "Más de 5 MiB por archivo / 6 MiB por petición"
+            "description": "Más de 5 MiB por archivo / 26 MiB por petición"
           },
           "415": {
             "description": "Solo JPEG/PNG"
@@ -1557,8 +2302,77 @@
                   "file": {
                     "type": "string",
                     "format": "binary"
+                  },
+                  "referenceImage": {
+                    "type": "boolean",
+                    "default": false
                   }
                 }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/lost-reports/{parent}/photos/import": {
+      "post": {
+        "summary": "Importar copia JPEG/PNG desde HTTPS público",
+        "operationId": "post_lost_reports_parent_photos_import",
+        "responses": {
+          "201": {
+            "description": "Operación correcta",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PhotoResponseDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Entrada inválida"
+          },
+          "401": {
+            "description": "Sesión requerida o revocada"
+          },
+          "403": {
+            "description": "Sin permiso o CSRF inválido"
+          },
+          "404": {
+            "description": "Recurso inexistente o no visible"
+          },
+          "409": {
+            "description": "Estado incompatible o clave reutilizada con otros datos"
+          },
+          "429": {
+            "description": "Límite de intentos; Retry-After: 60"
+          }
+        },
+        "parameters": [
+          {
+            "name": "parent",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "X-CSRF-TOKEN",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ImportPhotoRequestDto"
               }
             }
           }
@@ -1912,7 +2726,17 @@
               "type": "string"
             }
           }
-        ]
+        ],
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ClaimDecisionRequestDto"
+              }
+            }
+          }
+        }
       }
     },
     "/claims/{id}/reject": {
@@ -1960,7 +2784,17 @@
               "type": "string"
             }
           }
-        ]
+        ],
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ClaimDecisionRequestDto"
+              }
+            }
+          }
+        }
       }
     },
     "/claims/{id}/cancel": {
@@ -2008,7 +2842,17 @@
               "type": "string"
             }
           }
-        ]
+        ],
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ClaimDecisionRequestDto"
+              }
+            }
+          }
+        }
       }
     },
     "/claims/{id}/complete": {
@@ -2054,6 +2898,361 @@
             "required": true,
             "schema": {
               "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ClaimDecisionRequestDto"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/claims/{claimId}/activity": {
+      "get": {
+        "summary": "Historial privado, más reciente primero; conserva hechos y comentarios",
+        "operationId": "get_claims_claimId_activity",
+        "responses": {
+          "200": {
+            "description": "Operación correcta",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PageClaimActivityDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Entrada inválida"
+          },
+          "401": {
+            "description": "Sesión requerida o revocada"
+          },
+          "403": {
+            "description": "Sin permiso o CSRF inválido"
+          },
+          "404": {
+            "description": "Recurso inexistente o no visible"
+          },
+          "409": {
+            "description": "Estado incompatible o clave reutilizada con otros datos"
+          },
+          "429": {
+            "description": "Límite de intentos; Retry-After: 60"
+          }
+        },
+        "parameters": [
+          {
+            "name": "claimId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 10000,
+              "default": 0
+            }
+          },
+          {
+            "name": "pageSize",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 100,
+              "default": 20
+            }
+          }
+        ]
+      }
+    },
+    "/claims/{claimId}/comments": {
+      "post": {
+        "summary": "Publicar comentario privado mientras el reclamo siga abierto",
+        "operationId": "post_claims_claimId_comments",
+        "responses": {
+          "201": {
+            "description": "Operación correcta",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ClaimActivityDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Entrada inválida"
+          },
+          "401": {
+            "description": "Sesión requerida o revocada"
+          },
+          "403": {
+            "description": "Sin permiso o CSRF inválido"
+          },
+          "404": {
+            "description": "Recurso inexistente o no visible"
+          },
+          "409": {
+            "description": "Estado incompatible o clave reutilizada con otros datos"
+          },
+          "429": {
+            "description": "Límite de intentos; Retry-After: 60"
+          }
+        },
+        "parameters": [
+          {
+            "name": "claimId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "X-CSRF-TOKEN",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "Idempotency-Key",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "pattern": "^[A-Za-z0-9._:-]{8,100}$",
+              "description": "Misma clave, usuario, ruta y datos: mismo ID. Datos diferentes: 409."
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ClaimCommentRequestDto"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/claims/{claimId}/evidence": {
+      "get": {
+        "summary": "Evidencias privadas, conservadas tras el cierre",
+        "operationId": "get_claims_claimId_evidence",
+        "responses": {
+          "200": {
+            "description": "Operación correcta",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ClaimEvidenceDto"
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Entrada inválida"
+          },
+          "401": {
+            "description": "Sesión requerida o revocada"
+          },
+          "403": {
+            "description": "Sin permiso o CSRF inválido"
+          },
+          "404": {
+            "description": "Recurso inexistente o no visible"
+          },
+          "409": {
+            "description": "Estado incompatible o clave reutilizada con otros datos"
+          },
+          "429": {
+            "description": "Límite de intentos; Retry-After: 60"
+          }
+        },
+        "parameters": [
+          {
+            "name": "claimId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ]
+      },
+      "post": {
+        "summary": "Agregar evidencia privada JPEG/PNG; máximo 5 por reclamo",
+        "operationId": "post_claims_claimId_evidence",
+        "responses": {
+          "201": {
+            "description": "Operación correcta",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ClaimEvidenceDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Entrada inválida"
+          },
+          "401": {
+            "description": "Sesión requerida o revocada"
+          },
+          "403": {
+            "description": "Sin permiso o CSRF inválido"
+          },
+          "404": {
+            "description": "Recurso inexistente o no visible"
+          },
+          "409": {
+            "description": "Estado incompatible o clave reutilizada con otros datos"
+          },
+          "429": {
+            "description": "Límite de intentos; Retry-After: 60"
+          },
+          "413": {
+            "description": "Más de 5 MiB"
+          },
+          "415": {
+            "description": "Solo JPEG/PNG"
+          }
+        },
+        "parameters": [
+          {
+            "name": "claimId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "X-CSRF-TOKEN",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "Idempotency-Key",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "pattern": "^[A-Za-z0-9._:-]{8,100}$",
+              "description": "Misma clave, usuario, ruta y datos: mismo ID. Datos diferentes: 409."
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "file"
+                ],
+                "properties": {
+                  "file": {
+                    "type": "string",
+                    "format": "binary"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/claims/{claimId}/evidence/{evidenceId}": {
+      "get": {
+        "summary": "Contenido privado de evidencia; no-store y nosniff",
+        "operationId": "get_claims_claimId_evidence_evidenceId",
+        "responses": {
+          "200": {
+            "description": "Operación correcta",
+            "content": {
+              "image/jpeg": {
+                "schema": {
+                  "type": "string",
+                  "format": "binary"
+                }
+              },
+              "image/png": {
+                "schema": {
+                  "type": "string",
+                  "format": "binary"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Entrada inválida"
+          },
+          "401": {
+            "description": "Sesión requerida o revocada"
+          },
+          "403": {
+            "description": "Sin permiso o CSRF inválido"
+          },
+          "404": {
+            "description": "Recurso inexistente o no visible"
+          },
+          "409": {
+            "description": "Estado incompatible o clave reutilizada con otros datos"
+          },
+          "429": {
+            "description": "Límite de intentos; Retry-After: 60"
+          }
+        },
+        "parameters": [
+          {
+            "name": "claimId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "evidenceId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
             }
           }
         ]
@@ -2211,6 +3410,210 @@
             "description": "Límite de intentos; Retry-After: 60"
           }
         }
+      },
+      "put": {
+        "summary": "Guardar nombre, alias e información académica; los opcionales ausentes se vacían",
+        "operationId": "put_auth_me",
+        "responses": {
+          "200": {
+            "description": "Operación correcta",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UserResponseDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Entrada inválida"
+          },
+          "401": {
+            "description": "Sesión requerida o revocada"
+          },
+          "403": {
+            "description": "Sin permiso o CSRF inválido"
+          },
+          "404": {
+            "description": "Recurso inexistente o no visible"
+          },
+          "409": {
+            "description": "Estado incompatible o clave reutilizada con otros datos"
+          },
+          "429": {
+            "description": "Límite de intentos; Retry-After: 60"
+          }
+        },
+        "parameters": [
+          {
+            "name": "X-CSRF-TOKEN",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateProfileRequestDto"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/auth/me/photo": {
+      "get": {
+        "summary": "Foto privada de la cuenta autenticada; JPEG 512 × 512, sin caché",
+        "operationId": "get_auth_me_photo",
+        "responses": {
+          "200": {
+            "description": "Operación correcta",
+            "content": {
+              "image/jpeg": {
+                "schema": {
+                  "type": "string",
+                  "format": "binary"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Entrada inválida"
+          },
+          "401": {
+            "description": "Sesión requerida o revocada"
+          },
+          "403": {
+            "description": "Sin permiso o CSRF inválido"
+          },
+          "404": {
+            "description": "Recurso inexistente o no visible"
+          },
+          "409": {
+            "description": "Estado incompatible o clave reutilizada con otros datos"
+          },
+          "429": {
+            "description": "Límite de intentos; Retry-After: 60"
+          }
+        }
+      },
+      "put": {
+        "summary": "Reemplazar foto de perfil; JPEG/PNG de hasta 5 MiB, recorte central",
+        "operationId": "put_auth_me_photo",
+        "responses": {
+          "200": {
+            "description": "Operación correcta",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UserResponseDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Entrada inválida"
+          },
+          "401": {
+            "description": "Sesión requerida o revocada"
+          },
+          "403": {
+            "description": "Sin permiso o CSRF inválido"
+          },
+          "404": {
+            "description": "Recurso inexistente o no visible"
+          },
+          "409": {
+            "description": "Estado incompatible o clave reutilizada con otros datos"
+          },
+          "429": {
+            "description": "Límite de intentos; Retry-After: 60"
+          },
+          "413": {
+            "description": "Más de 5 MiB por archivo / 26 MiB por petición"
+          },
+          "415": {
+            "description": "Solo JPEG/PNG"
+          }
+        },
+        "parameters": [
+          {
+            "name": "X-CSRF-TOKEN",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "file"
+                ],
+                "properties": {
+                  "file": {
+                    "type": "string",
+                    "format": "binary"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "summary": "Quitar foto; devuelve el perfil actualizado",
+        "operationId": "delete_auth_me_photo",
+        "responses": {
+          "200": {
+            "description": "Operación correcta",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UserResponseDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Entrada inválida"
+          },
+          "401": {
+            "description": "Sesión requerida o revocada"
+          },
+          "403": {
+            "description": "Sin permiso o CSRF inválido"
+          },
+          "404": {
+            "description": "Recurso inexistente o no visible"
+          },
+          "409": {
+            "description": "Estado incompatible o clave reutilizada con otros datos"
+          },
+          "429": {
+            "description": "Límite de intentos; Retry-After: 60"
+          }
+        },
+        "parameters": [
+          {
+            "name": "X-CSRF-TOKEN",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ]
       }
     },
     "/auth/login": {
@@ -2712,40 +4115,29 @@
       }
     },
     "schemas": {
+      "ClaimActivityKind": {
+        "type": "string",
+        "enum": [
+          "SUBMITTED",
+          "ACCEPTED",
+          "REJECTED",
+          "CANCELLED",
+          "COMPLETED",
+          "CLOSED",
+          "COMMENT",
+          "EVIDENCE_ADDED",
+          "CUSTODY_CHANGED",
+          "PUBLICATION_EDITED",
+          "DELEGATED",
+          "HISTORY_IMPORTED"
+        ]
+      },
       "ClaimView": {
         "type": "string",
         "enum": [
           "ALL",
           "SENT",
           "RECEIVED"
-        ]
-      },
-      "CatalogSort": {
-        "type": "string",
-        "enum": [
-          "RECENT",
-          "OLDEST",
-          "TITLE_ASC",
-          "TITLE_DESC"
-        ]
-      },
-      "EmailStatus": {
-        "type": "string",
-        "enum": [
-          "PENDING",
-          "SENT",
-          "FAILED"
-        ]
-      },
-      "ClaimStatus": {
-        "type": "string",
-        "enum": [
-          "PENDING",
-          "ACCEPTED",
-          "REJECTED",
-          "CANCELLED",
-          "COMPLETED",
-          "CLOSED"
         ]
       },
       "LostStatus": {
@@ -2760,23 +4152,16 @@
         "type": "string",
         "enum": [
           "WITH_FINDER",
+          "WITH_TEACHER",
           "OFFICE"
         ]
       },
-      "FoundStatus": {
+      "EmailStatus": {
         "type": "string",
         "enum": [
-          "AVAILABLE",
-          "RETURNED",
-          "WITHDRAWN"
-        ]
-      },
-      "UserRole": {
-        "type": "string",
-        "enum": [
-          "STUDENT",
-          "TEACHER",
-          "SECRETARY"
+          "PENDING",
+          "SENT",
+          "FAILED"
         ]
       },
       "Category": {
@@ -2787,6 +4172,193 @@
           "KEYS",
           "CLOTHING",
           "OTHER"
+        ]
+      },
+      "CatalogSort": {
+        "type": "string",
+        "enum": [
+          "RECENT",
+          "OLDEST",
+          "TITLE_ASC",
+          "TITLE_DESC"
+        ]
+      },
+      "NotificationTarget": {
+        "type": "string",
+        "enum": [
+          "CLAIM",
+          "FOUND_ITEM",
+          "LOST_REPORT"
+        ]
+      },
+      "NotificationKind": {
+        "type": "string",
+        "enum": [
+          "FOUND_PUBLISHED",
+          "LOSS_PUBLISHED",
+          "SUBMITTED",
+          "ACCEPTED",
+          "REJECTED",
+          "CANCELLED",
+          "COMPLETED",
+          "CLOSED",
+          "COMMENT",
+          "EVIDENCE_ADDED",
+          "CUSTODY_CHANGED",
+          "PUBLICATION_EDITED",
+          "DELEGATED",
+          "IN_PROGRESS",
+          "POSSIBLE_MATCH"
+        ]
+      },
+      "UserRole": {
+        "type": "string",
+        "enum": [
+          "STUDENT",
+          "TEACHER",
+          "SECRETARY"
+        ]
+      },
+      "ClaimStatus": {
+        "type": "string",
+        "enum": [
+          "PENDING",
+          "ACCEPTED",
+          "REJECTED",
+          "CANCELLED",
+          "COMPLETED",
+          "CLOSED"
+        ]
+      },
+      "FoundStatus": {
+        "type": "string",
+        "enum": [
+          "AVAILABLE",
+          "RETURNED",
+          "WITHDRAWN"
+        ]
+      },
+      "NotificationFilter": {
+        "type": "string",
+        "enum": [
+          "ALL",
+          "UNREAD"
+        ]
+      },
+      "PushTestRequestDto": {
+        "type": "object",
+        "properties": {
+          "subscriptionId": {
+            "type": "string",
+            "format": "uuid"
+          }
+        },
+        "required": [
+          "subscriptionId"
+        ]
+      },
+      "PushPreferenceDto": {
+        "type": "object",
+        "properties": {
+          "dailyReminders": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "timeZone": {
+            "type": "string"
+          },
+          "firstHour": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "secondHour": {
+            "type": "integer",
+            "format": "int32"
+          }
+        }
+      },
+      "PushPreferenceRequestDto": {
+        "type": "object",
+        "properties": {
+          "dailyReminders": {
+            "type": "integer",
+            "format": "int32",
+            "minimum": 0,
+            "maximum": 2
+          }
+        },
+        "required": [
+          "dailyReminders"
+        ]
+      },
+      "PushConfigDto": {
+        "type": "object",
+        "properties": {
+          "enabled": {
+            "type": "boolean"
+          },
+          "applicationServerKey": {
+            "type": "string",
+            "nullable": true,
+            "description": "Clave pública VAPID P-256, nunca la privada."
+          }
+        }
+      },
+      "PushSubscriptionResponseDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "userId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "bindingToken": {
+            "type": "string",
+            "description": "Vinculación opaca al dispositivo; guardar solo en el service worker de esta cuenta."
+          }
+        }
+      },
+      "PushSubscriptionRequestDto": {
+        "type": "object",
+        "properties": {
+          "expectedUserId": {
+            "$ref": "#/components/schemas/java.util.UUID"
+          },
+          "endpoint": {
+            "type": "string",
+            "format": "uri",
+            "maxLength": 2048,
+            "writeOnly": true,
+            "description": "Endpoint HTTPS del servicio push permitido; no se aceptan destinos arbitrarios."
+          },
+          "keys": {
+            "$ref": "#/components/schemas/PushKeysDto"
+          }
+        },
+        "required": [
+          "expectedUserId",
+          "endpoint",
+          "keys"
+        ]
+      },
+      "PushKeysDto": {
+        "type": "object",
+        "properties": {
+          "p256dh": {
+            "type": "string",
+            "writeOnly": true
+          },
+          "auth": {
+            "type": "string",
+            "writeOnly": true
+          }
+        },
+        "required": [
+          "p256dh",
+          "auth"
         ]
       },
       "DirectoryUserDto": {
@@ -2807,161 +4379,56 @@
           }
         }
       },
-      "DirectoryQueryDto": {
+      "FoundPublicationRequestDto": {
         "type": "object",
         "properties": {
-          "q": {
-            "type": "string"
+          "report": {
+            "$ref": "#/components/schemas/ReportRequestDto"
           },
-          "role": {
-            "$ref": "#/components/schemas/UserRole"
-          },
-          "page": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "pageSize": {
-            "type": "integer",
-            "format": "int32"
-          }
-        }
-      },
-      "ClaimQueryDto": {
-        "type": "object",
-        "properties": {
-          "status": {
-            "$ref": "#/components/schemas/ClaimStatus"
-          },
-          "view": {
-            "$ref": "#/components/schemas/ClaimView"
-          },
-          "foundItemId": {
+          "sourceLostReportId": {
             "type": "string",
-            "format": "uuid"
-          },
-          "page": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "pageSize": {
-            "type": "integer",
-            "format": "int32"
-          }
-        }
-      },
-      "ClaimDetailDto": {
-        "type": "object",
-        "properties": {
-          "claim": {
-            "$ref": "#/components/schemas/ClaimResponseDto"
-          },
-          "foundItem": {
-            "$ref": "#/components/schemas/FoundItemResponseDto"
-          },
-          "responsible": {
-            "$ref": "#/components/schemas/DirectoryUserDto"
-          },
-          "claimant": {
-            "$ref": "#/components/schemas/DirectoryUserDto"
-          }
-        }
-      },
-      "CatalogQueryDto": {
-        "type": "object",
-        "properties": {
-          "q": {
-            "type": "string"
-          },
-          "category": {
-            "$ref": "#/components/schemas/Category"
-          },
-          "location": {
-            "type": "string"
-          },
-          "status": {
-            "type": "string"
+            "format": "uuid",
+            "nullable": true,
+            "description": "Extravío de origen activo, publicado por otra persona; coincidencia posible, sin crear ni cerrar reclamos automáticamente."
           },
           "custody": {
-            "$ref": "#/components/schemas/CustodyStatus"
-          },
-          "dateFrom": {
-            "type": "string",
-            "format": "date"
-          },
-          "dateTo": {
-            "type": "string",
-            "format": "date"
-          },
-          "sort": {
-            "$ref": "#/components/schemas/CatalogSort"
-          },
-          "page": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "pageSize": {
-            "type": "integer",
-            "format": "int32"
-          }
-        }
-      },
-      "PhotoResponseDto": {
-        "type": "object",
-        "properties": {
-          "id": {
-            "type": "string",
-            "format": "uuid"
-          },
-          "contentType": {
-            "type": "string"
-          },
-          "sizeBytes": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "createdAt": {
-            "type": "string",
-            "format": "date-time"
-          }
-        }
-      },
-      "ResetPasswordRequestDto": {
-        "type": "object",
-        "properties": {
-          "token": {
-            "type": "string"
-          },
-          "newPassword": {
-            "type": "string",
-            "minLength": 12,
-            "maxLength": 72,
-            "writeOnly": true,
-            "description": "Máximo 72 bytes UTF-8; no se recorta."
+            "$ref": "#/components/schemas/CustodyRequestDto"
           }
         },
         "required": [
-          "token",
-          "newPassword"
+          "report",
+          "custody"
         ]
       },
-      "ChangePasswordRequestDto": {
+      "ImportPhotoRequestDto": {
         "type": "object",
         "properties": {
-          "currentPassword": {
-            "type": "string"
-          },
-          "newPassword": {
+          "url": {
             "type": "string",
-            "minLength": 12,
-            "maxLength": 72,
-            "writeOnly": true,
-            "description": "Máximo 72 bytes UTF-8; no se recorta."
+            "format": "uri",
+            "maxLength": 2048,
+            "description": "Enlace HTTPS directo de una imagen pública. Puerto 443."
+          },
+          "referenceImage": {
+            "type": "boolean",
+            "default": false
           }
         },
         "required": [
-          "currentPassword",
-          "newPassword"
+          "url"
         ]
+      },
+      "ErrorResponseDto": {
+        "type": "object",
+        "properties": {
+          "status": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "message": {
+            "type": "string"
+          }
+        }
       },
       "RegisterRequestDto": {
         "type": "object",
@@ -2984,90 +4451,6 @@
           "email",
           "password",
           "displayName"
-        ]
-      },
-      "EmailRequestDto": {
-        "type": "object",
-        "properties": {
-          "email": {
-            "type": "string"
-          }
-        },
-        "required": [
-          "email"
-        ]
-      },
-      "VerifyEmailRequestDto": {
-        "type": "object",
-        "properties": {
-          "token": {
-            "type": "string"
-          }
-        },
-        "required": [
-          "token"
-        ]
-      },
-      "CsrfResponseDto": {
-        "type": "object",
-        "properties": {
-          "headerName": {
-            "type": "string"
-          },
-          "token": {
-            "type": "string"
-          }
-        }
-      },
-      "ErrorResponseDto": {
-        "type": "object",
-        "properties": {
-          "status": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "message": {
-            "type": "string"
-          }
-        }
-      },
-      "IdResponseDto": {
-        "type": "object",
-        "properties": {
-          "id": {
-            "type": "string",
-            "format": "uuid"
-          }
-        }
-      },
-      "DelegateRequestDto": {
-        "type": "object",
-        "properties": {
-          "responsibleId": {
-            "type": "string",
-            "format": "uuid"
-          }
-        },
-        "required": [
-          "responsibleId"
-        ]
-      },
-      "ClaimRequestDto": {
-        "type": "object",
-        "properties": {
-          "privateDescription": {
-            "type": "string",
-            "minLength": 1,
-            "maxLength": 2000
-          },
-          "lostReportId": {
-            "type": "string",
-            "format": "uuid",
-            "nullable": true
-          }
-        },
-        "required": [
-          "privateDescription"
         ]
       },
       "ReportRequestDto": {
@@ -3104,6 +4487,305 @@
           "location",
           "occurredOn"
         ]
+      },
+      "ClaimQueryDto": {
+        "type": "object",
+        "properties": {
+          "status": {
+            "$ref": "#/components/schemas/ClaimStatus"
+          },
+          "view": {
+            "$ref": "#/components/schemas/ClaimView"
+          },
+          "foundItemId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "page": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "pageSize": {
+            "type": "integer",
+            "format": "int32"
+          }
+        }
+      },
+      "PhotoResponseDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "contentType": {
+            "type": "string"
+          },
+          "sizeBytes": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "referenceImage": {
+            "type": "boolean"
+          }
+        }
+      },
+      "NotificationResponseDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "kind": {
+            "$ref": "#/components/schemas/NotificationKind"
+          },
+          "targetType": {
+            "$ref": "#/components/schemas/NotificationTarget"
+          },
+          "targetId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "title": {
+            "type": "string"
+          },
+          "body": {
+            "type": "string"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "readAt": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          }
+        }
+      },
+      "CustodyRequestDto": {
+        "type": "object",
+        "properties": {
+          "custody": {
+            "$ref": "#/components/schemas/CustodyStatus"
+          },
+          "teacherName": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 120,
+            "description": "Referencia verbal, obligatoria para WITH_TEACHER; no asigna permisos ni envía avisos al docente."
+          },
+          "location": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 200
+          }
+        },
+        "required": [
+          "custody"
+        ]
+      },
+      "CsrfResponseDto": {
+        "type": "object",
+        "properties": {
+          "headerName": {
+            "type": "string"
+          },
+          "token": {
+            "type": "string"
+          }
+        }
+      },
+      "ClaimEvidenceDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "authorId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "contentType": {
+            "type": "string"
+          },
+          "sizeBytes": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "UpdateProfileRequestDto": {
+        "type": "object",
+        "properties": {
+          "displayName": {
+            "type": "string",
+            "maxLength": 120,
+            "minLength": 3
+          },
+          "alias": {
+            "type": "string",
+            "maxLength": 60,
+            "nullable": true
+          },
+          "classroom": {
+            "type": "string",
+            "maxLength": 80,
+            "nullable": true
+          },
+          "groupName": {
+            "type": "string",
+            "maxLength": 80,
+            "nullable": true
+          },
+          "course": {
+            "type": "string",
+            "maxLength": 120,
+            "nullable": true
+          },
+          "degree": {
+            "type": "string",
+            "maxLength": 160,
+            "nullable": true
+          },
+          "building": {
+            "type": "string",
+            "maxLength": 80,
+            "nullable": true
+          }
+        },
+        "required": [
+          "displayName"
+        ],
+        "additionalProperties": false
+      },
+      "ChangePasswordRequestDto": {
+        "type": "object",
+        "properties": {
+          "currentPassword": {
+            "type": "string"
+          },
+          "newPassword": {
+            "type": "string",
+            "minLength": 12,
+            "maxLength": 72,
+            "writeOnly": true,
+            "description": "Máximo 72 bytes UTF-8; no se recorta."
+          }
+        },
+        "required": [
+          "currentPassword",
+          "newPassword"
+        ]
+      },
+      "ClaimDetailDto": {
+        "type": "object",
+        "properties": {
+          "claim": {
+            "$ref": "#/components/schemas/ClaimResponseDto"
+          },
+          "foundItem": {
+            "$ref": "#/components/schemas/FoundItemResponseDto"
+          },
+          "responsible": {
+            "$ref": "#/components/schemas/DirectoryUserDto"
+          },
+          "claimant": {
+            "$ref": "#/components/schemas/DirectoryUserDto"
+          },
+          "canContribute": {
+            "type": "boolean"
+          }
+        }
+      },
+      "ResetPasswordRequestDto": {
+        "type": "object",
+        "properties": {
+          "token": {
+            "type": "string"
+          },
+          "newPassword": {
+            "type": "string",
+            "minLength": 12,
+            "maxLength": 72,
+            "writeOnly": true,
+            "description": "Máximo 72 bytes UTF-8; no se recorta."
+          }
+        },
+        "required": [
+          "token",
+          "newPassword"
+        ]
+      },
+      "DirectoryQueryDto": {
+        "type": "object",
+        "properties": {
+          "q": {
+            "type": "string"
+          },
+          "role": {
+            "$ref": "#/components/schemas/UserRole"
+          },
+          "page": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "pageSize": {
+            "type": "integer",
+            "format": "int32"
+          }
+        }
+      },
+      "VerifyEmailRequestDto": {
+        "type": "object",
+        "properties": {
+          "token": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "token"
+        ]
+      },
+      "EmailRequestDto": {
+        "type": "object",
+        "properties": {
+          "email": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "email"
+        ]
+      },
+      "NotificationClearDto": {
+        "type": "object",
+        "properties": {
+          "cleared": {
+            "type": "integer",
+            "format": "int32"
+          }
+        }
+      },
+      "ClaimDecisionRequestDto": {
+        "type": "object",
+        "properties": {
+          "reason": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 2000
+          }
+        }
       },
       "ClaimResponseDto": {
         "type": "object",
@@ -3158,46 +4840,75 @@
           }
         }
       },
-      "LostReportResponseDto": {
+      "CatalogQueryDto": {
         "type": "object",
         "properties": {
-          "id": {
-            "type": "string",
-            "format": "uuid"
-          },
-          "ownerId": {
-            "type": "string",
-            "format": "uuid"
-          },
-          "title": {
-            "type": "string"
-          },
-          "description": {
+          "q": {
             "type": "string"
           },
           "category": {
             "$ref": "#/components/schemas/Category"
           },
-          "lostLocation": {
+          "location": {
             "type": "string"
           },
-          "lostOn": {
+          "status": {
+            "type": "string"
+          },
+          "custody": {
+            "$ref": "#/components/schemas/CustodyStatus"
+          },
+          "dateFrom": {
             "type": "string",
             "format": "date"
           },
-          "status": {
-            "$ref": "#/components/schemas/LostStatus"
-          },
-          "recoveredAt": {
+          "dateTo": {
             "type": "string",
-            "format": "date-time",
-            "nullable": true
+            "format": "date"
           },
-          "createdAt": {
-            "type": "string",
-            "format": "date-time"
+          "sort": {
+            "$ref": "#/components/schemas/CatalogSort"
+          },
+          "page": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "pageSize": {
+            "type": "integer",
+            "format": "int32"
           }
         }
+      },
+      "NotificationSummaryDto": {
+        "type": "object",
+        "properties": {
+          "unread": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "total": {
+            "type": "integer",
+            "format": "int64"
+          }
+        }
+      },
+      "ClaimRequestDto": {
+        "type": "object",
+        "properties": {
+          "privateDescription": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 2000
+          },
+          "lostReportId": {
+            "type": "string",
+            "format": "uuid",
+            "nullable": true
+          }
+        },
+        "required": [
+          "privateDescription"
+        ]
       },
       "FoundItemResponseDto": {
         "type": "object",
@@ -3249,6 +4960,29 @@
           "createdAt": {
             "type": "string",
             "format": "date-time"
+          },
+          "teacherName": {
+            "type": "string",
+            "nullable": true
+          },
+          "custodyLocation": {
+            "type": "string",
+            "nullable": true
+          },
+          "custodyMarkedBy": {
+            "type": "string",
+            "format": "uuid",
+            "nullable": true
+          },
+          "custodyMarkedAt": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "sourceLostReportId": {
+            "type": "string",
+            "format": "uuid",
+            "nullable": true
           }
         }
       },
@@ -3271,8 +5005,169 @@
           "createdAt": {
             "type": "string",
             "format": "date-time"
+          },
+          "alias": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 60,
+            "description": "Dato opcional del perfil de la cuenta autenticada. Sin valor: null."
+          },
+          "classroom": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 80,
+            "description": "Dato opcional del perfil de la cuenta autenticada. Sin valor: null."
+          },
+          "groupName": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 80,
+            "description": "Dato opcional del perfil de la cuenta autenticada. Sin valor: null."
+          },
+          "course": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 120,
+            "description": "Dato opcional del perfil de la cuenta autenticada. Sin valor: null."
+          },
+          "degree": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 160,
+            "description": "Dato opcional del perfil de la cuenta autenticada. Sin valor: null."
+          },
+          "building": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 80,
+            "description": "Dato opcional del perfil de la cuenta autenticada. Sin valor: null."
+          },
+          "studentNumber": {
+            "type": "string",
+            "nullable": true,
+            "readOnly": true,
+            "pattern": "^[0-9]{10}$",
+            "description": "Solo alumnos cuyo correo coincida con a + 10 dígitos @utch.edu.mx; no acredita inscripción."
+          },
+          "avatarVersion": {
+            "type": "string",
+            "format": "uuid",
+            "nullable": true,
+            "readOnly": true,
+            "description": "Versión de la foto privada en /auth/me/photo; null si no hay foto."
           }
         }
+      },
+      "ClaimCommentRequestDto": {
+        "type": "object",
+        "properties": {
+          "body": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 2000
+          }
+        },
+        "required": [
+          "body"
+        ]
+      },
+      "LostReportResponseDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "ownerId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "title": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "category": {
+            "$ref": "#/components/schemas/Category"
+          },
+          "lostLocation": {
+            "type": "string"
+          },
+          "lostOn": {
+            "type": "string",
+            "format": "date"
+          },
+          "status": {
+            "$ref": "#/components/schemas/LostStatus"
+          },
+          "recoveredAt": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "ClaimActivityDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "kind": {
+            "$ref": "#/components/schemas/ClaimActivityKind"
+          },
+          "actorId": {
+            "type": "string",
+            "format": "uuid",
+            "nullable": true
+          },
+          "actorName": {
+            "type": "string"
+          },
+          "body": {
+            "type": "string"
+          },
+          "detailsJson": {
+            "type": "string",
+            "nullable": true
+          },
+          "evidenceId": {
+            "type": "string",
+            "format": "uuid",
+            "nullable": true
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "IdResponseDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          }
+        }
+      },
+      "DelegateRequestDto": {
+        "type": "object",
+        "properties": {
+          "responsibleId": {
+            "type": "string",
+            "format": "uuid"
+          }
+        },
+        "required": [
+          "responsibleId"
+        ]
       },
       "PageFoundItemResponseDto": {
         "type": "object",
@@ -3458,6 +5353,90 @@
             "type": "array",
             "items": {
               "$ref": "#/components/schemas/PhotoResponseDto"
+            }
+          },
+          "total": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "page": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "pageSize": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "totalPages": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "hasNext": {
+            "type": "boolean"
+          },
+          "hasPrevious": {
+            "type": "boolean"
+          }
+        }
+      },
+      "PageClaimActivityDto": {
+        "type": "object",
+        "required": [
+          "items",
+          "total",
+          "page",
+          "pageSize",
+          "totalPages",
+          "hasNext",
+          "hasPrevious"
+        ],
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ClaimActivityDto"
+            }
+          },
+          "total": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "page": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "pageSize": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "totalPages": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "hasNext": {
+            "type": "boolean"
+          },
+          "hasPrevious": {
+            "type": "boolean"
+          }
+        }
+      },
+      "PageNotificationResponseDto": {
+        "type": "object",
+        "required": [
+          "items",
+          "total",
+          "page",
+          "pageSize",
+          "totalPages",
+          "hasNext",
+          "hasPrevious"
+        ],
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/NotificationResponseDto"
             }
           },
           "total": {

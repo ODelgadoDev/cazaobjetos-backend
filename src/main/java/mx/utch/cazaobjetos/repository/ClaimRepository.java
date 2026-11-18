@@ -21,6 +21,8 @@ public interface ClaimRepository extends JpaRepository<ClaimModel, UUID> {
     boolean existsByFoundItemIdAndStatus(UUID itemId, ClaimStatus status);
     boolean existsByFoundItemIdAndClaimantIdAndStatusIn(UUID itemId, UUID userId, Collection<ClaimStatus> statuses);
     boolean existsByLostReportIdAndStatusIn(UUID lossId, Collection<ClaimStatus> statuses);
+    List<ClaimModel> findByLostReportIdAndStatusIn(UUID lossId, Collection<ClaimStatus> statuses);
+    List<ClaimModel> findByFoundItemIdAndStatusIn(UUID itemId, Collection<ClaimStatus> statuses);
     List<ClaimModel> findByFoundItemIdAndStatus(UUID itemId, ClaimStatus status);
 
     @Query("""
