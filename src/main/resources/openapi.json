@@ -5225,7 +5225,9 @@
         "type": "object",
         "properties": {
           "email": {
-            "type": "string"
+            "type": "string",
+            "pattern": "^[aA][0-9]{10}@[uU][tT][cC][hH]\\.[eE][dD][uU]\\.[mM][xX]$",
+            "example": "a1234567890@utch.edu.mx"
           },
           "password": {
             "type": "string",
@@ -5236,12 +5238,24 @@
           },
           "displayName": {
             "type": "string"
+          },
+          "degree": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 160
+          },
+          "building": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 80
           }
         },
         "required": [
           "email",
           "password",
-          "displayName"
+          "displayName",
+          "degree",
+          "building"
         ]
       },
       "ReportRequestDto": {
@@ -5468,17 +5482,19 @@
           },
           "degree": {
             "type": "string",
-            "maxLength": 160,
-            "nullable": true
+            "minLength": 1,
+            "maxLength": 160
           },
           "building": {
             "type": "string",
-            "maxLength": 80,
-            "nullable": true
+            "minLength": 1,
+            "maxLength": 80
           }
         },
         "required": [
-          "displayName"
+          "displayName",
+          "degree",
+          "building"
         ],
         "additionalProperties": false
       },

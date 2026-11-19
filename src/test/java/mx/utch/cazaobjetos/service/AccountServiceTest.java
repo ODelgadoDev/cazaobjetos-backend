@@ -19,11 +19,11 @@ class AccountServiceTest {
     @Autowired AccountService accounts;
     @Autowired JdbcTemplate db;
     @Autowired PasswordEncoder passwords;
-    private static final String EMAIL = "prueba@utch.edu.mx";
+    private static final String EMAIL = "a1234567890@utch.edu.mx";
     @BeforeEach void reset() {
         db.execute("TRUNCATE email_verification,email_outbox,audit_event,claim,lost_report,found_item,app_user CASCADE");
     }
-    void register() { accounts.register(new RegisterRequestDto("Prueba@UTCH.EDU.MX", "contraseña-pruebas-123", "Ana")); }
+    void register() { accounts.register(new RegisterRequestDto("A1234567890@UTCH.EDU.MX", "contraseña-pruebas-123", "Ana", " TI ", " I ")); }
     String token() {
         String body = db.queryForObject("SELECT body FROM email_outbox ORDER BY created_at DESC LIMIT 1", String.class);
         return Arrays.stream(body.split("\\R")).filter(line -> line.matches("[A-Za-z0-9_-]{43}")).findFirst().orElseThrow();
@@ -34,6 +34,8 @@ class AccountServiceTest {
     @Test void registrationIsDisabledAndDoesNotStorePlainPasswordOrPlainTokenInVerification() {
         register();
         var user = db.queryForMap("SELECT * FROM app_user WHERE email=?", EMAIL);
+        assertEquals("TI",user.get("degree"));
+        assertEquals("I",user.get("building"));
         assertEquals(false, user.get("enabled"));
         assertEquals("STUDENT", user.get("role"));
         assertTrue(passwords.matches("contraseña-pruebas-123", (String)user.get("password_hash")));
@@ -73,14 +75,25 @@ class AccountServiceTest {
     }
     @Test void nonInstitutionalDomainAndTooManyPasswordBytesAreRejected() {
         for (String email : List.of("test@gmail.com", "test@utch.edu.mx.evil.com", "test@sub.utch.edu.mx")) {
-            fails(400, () -> accounts.register(new RegisterRequestDto(email, "clave-prueba-123", "Ana")));
+            fails(400, () -> accounts.register(new RegisterRequestDto(email, "clave-prueba-123", "Ana", " TI ", " I ")));
         }
-        fails(400, () -> accounts.register(new RegisterRequestDto(EMAIL, "é".repeat(40), "Ana")));
+        fails(400, () -> accounts.register(new RegisterRequestDto(EMAIL, "é".repeat(40), "Ana", " TI ", " I ")));
         assertEquals(0L, db.queryForObject("SELECT count(*) FROM app_user", Long.class));
+    }
+    @Test void registrationRejectsMissingAcademicDataAndNonStudentEmailBeforeAnyWrite() {
+        for (String email:List.of("alumno.demo@utch.edu.mx","a123@utch.edu.mx","1234567890@utch.edu.mx"))
+            fails(400,()->accounts.register(new RegisterRequestDto(email,"clave-prueba-123","Ana","TI","I")));
+        for(String blank:Arrays.asList(null,"","   ")) {
+            fails(400,()->accounts.register(new RegisterRequestDto(EMAIL,"clave-prueba-123","Ana",blank,"I")));
+            fails(400,()->accounts.register(new RegisterRequestDto(EMAIL,"clave-prueba-123","Ana","TI",blank)));
+        }
+        fails(400,()->accounts.register(new RegisterRequestDto(EMAIL,"clave-prueba-123","Ana","línea\nextra","I")));
+        assertEquals(0L,db.queryForObject("SELECT count(*) FROM app_user",Long.class));
+        assertEquals(0L,db.queryForObject("SELECT count(*) FROM email_outbox",Long.class));
     }
     @Test void duplicateRegistrationDoesNotChangePasswordOrCreateAnotherMail() {
         register();
-        fails(409, () -> accounts.register(new RegisterRequestDto(EMAIL,"otra-clave-123", "Otro")));
+        fails(409, () -> accounts.register(new RegisterRequestDto(EMAIL,"otra-clave-123", "Otro", "TI", "I")));
         assertEquals(1L, db.queryForObject("SELECT count(*) FROM email_outbox", Long.class));
     }
     @Test void concurrentVerificationOnlySucceedsOnce() throws Exception {

@@ -40,6 +40,10 @@ public class AccountService {
 
     public void register(RegisterRequestDto request) {
         String email = normalize(request.email());
+        require(mx.utch.cazaobjetos.util.StudentNumberUtil.fromEmail(email,UserRole.STUDENT)!=null,
+                HttpStatus.BAD_REQUEST,"Usa un correo de alumno: a + 10 dígitos + @utch.edu.mx");
+        String degree=academicField(request.degree(),160,"carrera");
+        String building=academicField(request.building(),80,"edificio");
         require(request.password().getBytes(StandardCharsets.UTF_8).length <= 72,
                 HttpStatus.BAD_REQUEST, "La contraseña no puede superar 72 bytes UTF-8");
         require(!users.existsByEmail(email), HttpStatus.CONFLICT, "No se puede registrar ese correo; inicia sesión o solicita otra verificación");
@@ -47,12 +51,22 @@ public class AccountService {
         user.setId(UUID.randomUUID());
         user.setEmail(email);
         user.setDisplayName(request.displayName().strip());
+        user.setDegree(degree);
+        user.setBuilding(building);
         user.setPasswordHash(passwords.encode(request.password()));
         user.setRole(UserRole.STUDENT); // Public registration cannot grant teacher/secretary privileges.
         user.setEnabled(false);
         user.setCreatedAt(Instant.now());
         users.saveAndFlush(user);
         issue(user);
+    }
+
+    private String academicField(String raw, int max, String label) {
+        require(raw!=null && !raw.isBlank(),HttpStatus.BAD_REQUEST,"Escribe tu "+label);
+        String value=raw.strip();
+        require(value.length()<=max && value.codePoints().noneMatch(Character::isISOControl),
+                HttpStatus.BAD_REQUEST,"Revisa tu "+label+": debe escribirse en una sola línea");
+        return value;
     }
 
     public void resend(String rawEmail) {

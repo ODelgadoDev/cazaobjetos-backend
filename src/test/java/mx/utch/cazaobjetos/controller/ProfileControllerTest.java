@@ -111,9 +111,11 @@ class ProfileControllerTest {
         assertEquals(200, get("/auth/me").statusCode());
         assertEquals("Docente", db.queryForObject("SELECT display_name FROM app_user WHERE id=?", String.class, teacher));
         assertEquals(0L, db.queryForObject("SELECT credentials_version FROM app_user WHERE id=?", Long.class, student));
-        assertEquals(200, putProfile("{\"displayName\":\"Jesús Orlando\",\"alias\":\"   \"}", true).statusCode());
+        assertEquals(200, putProfile("{\"displayName\":\"Jesús Orlando\",\"alias\":\"   \",\"degree\":\"TI\",\"building\":\"I\"}", true).statusCode());
         var cleared = json.readTree(get("/auth/me").body());
-        for (String field : OPTIONAL) assertTrue(cleared.get(field).isNull(), field);
+        for (String field : List.of("alias","classroom","groupName","course")) assertTrue(cleared.get(field).isNull(), field);
+        assertEquals("TI",cleared.get("degree").asText());
+        assertEquals("I",cleared.get("building").asText());
         assertEquals(2L, db.queryForObject("SELECT count(*) FROM audit_event WHERE action='PROFILE_UPDATED' AND actor_id=?", Long.class, student));
     }
 
@@ -128,6 +130,13 @@ class ProfileControllerTest {
             assertEquals("Perfil anterior", json.readTree(get("/auth/me").body()).get("displayName").asText());
         }
         assertEquals(0L, db.queryForObject("SELECT count(*) FROM audit_event", Long.class));
+    }
+
+    @Test void careerAndBuildingCannotBeCleared() throws Exception {
+        for(String body:List.of("{\"displayName\":\"Alumno\",\"degree\":\"\",\"building\":\"I\"}",
+                "{\"displayName\":\"Alumno\",\"degree\":\"TI\",\"building\":\"   \"}"))
+            assertEquals(400,putProfile(body,true).statusCode());
+        assertEquals("Perfil anterior",json.readTree(get("/auth/me").body()).get("displayName").asText());
     }
 
     @Test void studentNumberRecognizesOnlyStudentExampleFormat() throws Exception {

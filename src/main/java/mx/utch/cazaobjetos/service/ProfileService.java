@@ -19,13 +19,16 @@ public class ProfileService {
         var user = users.lockMe(email);
         String name = clean(request.displayName());
         require(name != null && name.length() >= 3, HttpStatus.BAD_REQUEST, "Escribe un nombre de al menos 3 caracteres");
+        String degree=clean(request.degree());
+        String building=clean(request.building());
+        require(degree!=null && building!=null,HttpStatus.BAD_REQUEST,"Carrera y edificio son obligatorios");
         user.setDisplayName(name);
         user.setAlias(clean(request.alias()));
         user.setClassroom(clean(request.classroom()));
         user.setGroupName(clean(request.groupName()));
         user.setCourse(clean(request.course()));
-        user.setDegree(clean(request.degree()));
-        user.setBuilding(clean(request.building()));
+        user.setDegree(degree);
+        user.setBuilding(building);
         events.audit(user.getId(), user.getId(), "PROFILE_UPDATED");
         return users.me(email);
     }

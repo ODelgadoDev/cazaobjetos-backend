@@ -9,8 +9,8 @@ public record UpdateProfileRequestDto(
         @Size(max = 80) String classroom,
         @Size(max = 80) String groupName,
         @Size(max = 120) String course,
-        @Size(max = 160) String degree,
-        @Size(max = 80) String building) {
+        @NotBlank @Size(max = 160) String degree,
+        @NotBlank @Size(max = 80) String building) {
     @JsonAnySetter
     public void unsupported(String field, Object value) {
         throw new IllegalArgumentException("Campo no permitido en el perfil");
