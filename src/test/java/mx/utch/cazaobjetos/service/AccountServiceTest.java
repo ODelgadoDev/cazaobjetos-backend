@@ -93,7 +93,9 @@ class AccountServiceTest {
     }
     @Test void duplicateRegistrationDoesNotChangePasswordOrCreateAnotherMail() {
         register();
-        fails(409, () -> accounts.register(new RegisterRequestDto(EMAIL,"otra-clave-123", "Otro", "TI", "I")));
+        var duplicate=assertThrows(BusinessException.class,()->accounts.register(new RegisterRequestDto(EMAIL,"otra-clave-123", "Otro", "TI", "I")));
+        assertEquals(409,duplicate.getStatusCode().value());
+        assertEquals("Este correo ya está registrado. Inicia sesión o verifica tu cuenta.",duplicate.getMessage());
         assertEquals(1L, db.queryForObject("SELECT count(*) FROM email_outbox", Long.class));
     }
     @Test void concurrentVerificationOnlySucceedsOnce() throws Exception {

@@ -46,7 +46,7 @@ public class AccountService {
         String building=academicField(request.building(),80,"edificio");
         require(request.password().getBytes(StandardCharsets.UTF_8).length <= 72,
                 HttpStatus.BAD_REQUEST, "La contraseña no puede superar 72 bytes UTF-8");
-        require(!users.existsByEmail(email), HttpStatus.CONFLICT, "No se puede registrar ese correo; inicia sesión o solicita otra verificación");
+        require(!users.existsByEmail(email), HttpStatus.CONFLICT, "Este correo ya está registrado. Inicia sesión o verifica tu cuenta.");
         UserModel user = new UserModel();
         user.setId(UUID.randomUUID());
         user.setEmail(email);
