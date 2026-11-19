@@ -12,6 +12,15 @@ public class RegistrationController {
     private final AccountService accounts;
     public RegistrationController(AccountService accounts) { this.accounts = accounts; }
 
+    @GetMapping("/registration-options")
+    public RegistrationOptionsDto options() { return new RegistrationOptionsDto(accounts.demoVerification()); }
+
+    @PostMapping("/verify-email/demo")
+    public ResponseEntity<Void> verifyDemo(@Valid @RequestBody EmailRequestDto request) {
+        accounts.verifyDemo(request.email());
+        return ResponseEntity.noContent().build();
+    }
+
     @PostMapping("/register")
     public ResponseEntity<Void> register(@Valid @RequestBody RegisterRequestDto request) {
         accounts.register(request);

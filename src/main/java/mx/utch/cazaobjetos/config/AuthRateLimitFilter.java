@@ -18,7 +18,7 @@ public class AuthRateLimitFilter extends OncePerRequestFilter {
     public AuthRateLimitFilter(String api, Clock clock) {
         this.clock = clock;
         paths = Set.of(api + "/auth/login", api + "/auth/register",
-                api + "/auth/verify-email", api + "/auth/resend-verification",
+                api + "/auth/verify-email", api + "/auth/verify-email/demo", api + "/auth/resend-verification",
                 api + "/auth/forgot-password", api + "/auth/reset-password", api + "/auth/change-password");
     }
     private synchronized boolean allow(String ip) {

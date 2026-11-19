@@ -82,6 +82,12 @@ class RegistrationControllerTest {
         assertEquals("I",json.readTree(me.body()).get("building").asText());
         assertFalse(me.body().contains("passwordHash"));
     }
+    @Test void demoActivationIsUnavailableInNormalMode() throws Exception {
+        var options=client.send(HttpRequest.newBuilder(URI.create(base()+"/registration-options")).GET().build(),HttpResponse.BodyHandlers.ofString());
+        assertEquals(200,options.statusCode());
+        assertFalse(json.readTree(options.body()).get("demoVerification").asBoolean());
+        assertEquals(404,post("/verify-email/demo","{\"email\":\"a1234567890@utch.edu.mx\"}",true,false));
+    }
     @Test void registrationRequiresCsrfAndValidInputs() throws Exception {
         assertEquals(403,post("/register",registration(),false,false));
         assertEquals(400,post("/register",registration().replace("utch.edu.mx","gmail.com"),true,false));

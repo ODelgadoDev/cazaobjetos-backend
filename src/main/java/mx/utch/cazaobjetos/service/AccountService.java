@@ -18,17 +18,35 @@ import static mx.utch.cazaobjetos.util.ValidateUtil.require;
 @Service
 @Transactional
 public class AccountService {
+    private final RegistrationMode mode;
     private final UserRepository users;
     private final EmailVerificationRepository verifications;
     private final EmailOutboxRepository outbox;
     private final PasswordEncoder passwords;
 
     public AccountService(UserRepository users, EmailVerificationRepository verifications,
-                          EmailOutboxRepository outbox, PasswordEncoder passwords) {
+                          EmailOutboxRepository outbox, PasswordEncoder passwords, RegistrationMode mode) {
+        this.mode=mode;
         this.users = users;
         this.verifications = verifications;
         this.outbox = outbox;
         this.passwords = passwords;
+    }
+
+    public boolean demoVerification() { return mode.demoVerification(); }
+
+    public void verifyDemo(String rawEmail) {
+        require(mode.demoVerification(),HttpStatus.NOT_FOUND,"Verificación de prueba no disponible");
+        UUID id=users.findIdByEmail(normalize(rawEmail)).orElseThrow(()->new BusinessException(HttpStatus.NOT_FOUND,"Crea tu cuenta primero"));
+        UserModel user=users.findLockedById(id).orElseThrow(this::invalidToken);
+        if(user.getEnabled() && user.getEmailVerifiedAt()!=null) return;
+        require(user.getEmailVerifiedAt()==null,HttpStatus.CONFLICT,"Esta cuenta está deshabilitada");
+        var verification=verifications.findById(id).orElseThrow(this::invalidToken);
+        require(verification.getConsumedAt()==null,HttpStatus.CONFLICT,"Esta cuenta no tiene una activación pendiente");
+        Instant now=Instant.now();
+        user.setEmailVerifiedAt(now);
+        user.setEnabled(true);
+        verification.setConsumedAt(now);
     }
 
     private String normalize(String raw) {
@@ -90,6 +108,7 @@ public class AccountService {
         verification.setSentAt(now);
         verification.setConsumedAt(null);
         verifications.save(verification);
+        if(mode.demoVerification()) return;
         EmailOutboxModel email = new EmailOutboxModel();
         email.setId(UUID.randomUUID());
         email.setEventKey("VERIFY:" + UUID.randomUUID());

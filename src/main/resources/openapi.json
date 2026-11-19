@@ -4887,6 +4887,63 @@
           }
         ]
       }
+    },
+    "/auth/verify-email/demo": {
+      "post": {
+        "summary": "Activar una cuenta pendiente sin código, solo en modo local de prueba",
+        "operationId": "post_auth_verify_email_demo",
+        "responses": {
+          "204": {
+            "description": "Cuenta de prueba activada"
+          },
+          "404": {
+            "description": "Modo de prueba no disponible o cuenta inexistente"
+          },
+          "409": {
+            "description": "Cuenta deshabilitada o sin activación pendiente"
+          }
+        },
+        "security": [],
+        "parameters": [
+          {
+            "name": "X-CSRF-TOKEN",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/EmailRequestDto"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/auth/registration-options": {
+      "get": {
+        "summary": "Modo de verificación del registro",
+        "operationId": "get_auth_registration_options",
+        "responses": {
+          "200": {
+            "description": "Opciones de registro",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RegistrationOptionsDto"
+                }
+              }
+            }
+          }
+        },
+        "security": []
+      }
     }
   },
   "components": {
@@ -6500,6 +6557,18 @@
           "location": {
             "type": "string",
             "maxLength": 200
+          }
+        }
+      },
+      "RegistrationOptionsDto": {
+        "type": "object",
+        "required": [
+          "demoVerification"
+        ],
+        "properties": {
+          "demoVerification": {
+            "type": "boolean",
+            "description": "Solo verdadero con perfil dev y activación local explícita."
           }
         }
       }

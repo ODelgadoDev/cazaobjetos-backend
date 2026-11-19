@@ -26,7 +26,7 @@ class SecurityConfig {
                 .addFilterBefore(new PushLoginSessionFilter(api), org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter.class)
                 .authorizeHttpRequests(a -> a
                     .requestMatchers(api + "/openapi.json", api + "/health", api + "/auth/csrf", api + "/auth/login",
-                        api + "/auth/register", api + "/auth/forgot-password", api + "/auth/reset-password", api + "/auth/verify-email", api + "/auth/resend-verification").permitAll()
+                        api + "/auth/registration-options", api + "/auth/verify-email/demo", api + "/auth/register", api + "/auth/forgot-password", api + "/auth/reset-password", api + "/auth/verify-email", api + "/auth/resend-verification").permitAll()
                     .anyRequest().authenticated())
                 .formLogin(f -> f.loginProcessingUrl(api + "/auth/login")
                     .successHandler((req,res,auth) -> {push.loginSession((String)req.getAttribute(PushLoginSessionFilter.ATTRIBUTE));res.setStatus(204);})
