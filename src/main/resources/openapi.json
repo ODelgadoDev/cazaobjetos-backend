@@ -4699,6 +4699,194 @@
           }
         ]
       }
+    },
+    "/lost-reports/{lossId}/responses/{responseId}/custody": {
+      "put": {
+        "summary": "Cambiar entrega de una respuesta abierta (solo quien encontró el objeto)",
+        "operationId": "put_lost_response_custody",
+        "responses": {
+          "200": {
+            "description": "Operación correcta",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LostResponseDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Entrada inválida"
+          },
+          "401": {
+            "description": "Sesión requerida"
+          },
+          "403": {
+            "description": "Sin permiso"
+          },
+          "404": {
+            "description": "Recurso no disponible"
+          },
+          "409": {
+            "description": "Estado incompatible"
+          }
+        },
+        "parameters": [
+          {
+            "name": "lossId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "responseId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "X-CSRF-TOKEN",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LostResponseCustodyRequestDto"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/lost-reports/{lossId}/responses/{responseId}/authors/{authorId}/photo": {
+      "get": {
+        "summary": "Foto de perfil del autor, disponible para participantes de la conversación",
+        "operationId": "get__lost-reports_lossId_responses_responseId_authors_authorId_photo",
+        "responses": {
+          "200": {
+            "description": "Foto de perfil",
+            "content": {
+              "image/jpeg": {
+                "schema": {
+                  "type": "string",
+                  "format": "binary"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Entrada inválida"
+          },
+          "401": {
+            "description": "Sesión requerida"
+          },
+          "403": {
+            "description": "Sin permiso"
+          },
+          "404": {
+            "description": "Recurso no disponible"
+          },
+          "409": {
+            "description": "Estado incompatible"
+          }
+        },
+        "parameters": [
+          {
+            "name": "lossId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "responseId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "authorId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ]
+      }
+    },
+    "/claims/{claimId}/authors/{authorId}/photo": {
+      "get": {
+        "summary": "Foto de perfil del autor, disponible para participantes de la conversación",
+        "operationId": "get__claims_claimId_authors_authorId_photo",
+        "responses": {
+          "200": {
+            "description": "Foto de perfil",
+            "content": {
+              "image/jpeg": {
+                "schema": {
+                  "type": "string",
+                  "format": "binary"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Entrada inválida"
+          },
+          "401": {
+            "description": "Sesión requerida"
+          },
+          "403": {
+            "description": "Sin permiso"
+          },
+          "404": {
+            "description": "Recurso no disponible"
+          },
+          "409": {
+            "description": "Estado incompatible"
+          }
+        },
+        "parameters": [
+          {
+            "name": "claimId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "authorId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ]
+      }
     }
   },
   "components": {
@@ -5618,6 +5806,16 @@
             "type": "string",
             "maxLength": 120,
             "nullable": true
+          },
+          "reporterDegree": {
+            "type": "string",
+            "maxLength": 160,
+            "description": "Carrera actual del perfil, opcional."
+          },
+          "responsibleDegree": {
+            "type": "string",
+            "maxLength": 160,
+            "description": "Carrera actual del perfil, opcional."
           }
         }
       },
@@ -5752,6 +5950,11 @@
           },
           "hasResponse": {
             "type": "boolean"
+          },
+          "ownerDegree": {
+            "type": "string",
+            "maxLength": 160,
+            "description": "Carrera actual del perfil, opcional."
           }
         }
       },
@@ -5788,6 +5991,16 @@
           "createdAt": {
             "type": "string",
             "format": "date-time"
+          },
+          "actorAvatarVersion": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Versión actual de la foto de perfil, ausente si no hay foto."
+          },
+          "actorDegree": {
+            "type": "string",
+            "maxLength": 160,
+            "description": "Carrera actual del perfil, opcional."
           }
         }
       },
@@ -6125,6 +6338,19 @@
             "type": "string",
             "maxLength": 2048,
             "nullable": true
+          },
+          "custody": {
+            "type": "string",
+            "enum": [
+              "WITH_FINDER",
+              "OFFICE"
+            ],
+            "default": "WITH_FINDER"
+          },
+          "custodyLocation": {
+            "type": "string",
+            "maxLength": 200,
+            "description": "Lugar de recogida en oficina. Se ignora para entrega personal."
           }
         }
       },
@@ -6181,6 +6407,29 @@
               "UPLOAD"
             ],
             "nullable": true
+          },
+          "custody": {
+            "type": "string",
+            "enum": [
+              "WITH_FINDER",
+              "OFFICE"
+            ],
+            "default": "WITH_FINDER"
+          },
+          "custodyLocation": {
+            "type": "string",
+            "maxLength": 200,
+            "description": "Lugar de recogida en oficina. Se ignora para entrega personal."
+          },
+          "finderAvatarVersion": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Versión actual de la foto de perfil, ausente si no hay foto."
+          },
+          "finderDegree": {
+            "type": "string",
+            "maxLength": 160,
+            "description": "Carrera actual del perfil, opcional."
           }
         }
       },
@@ -6206,6 +6455,35 @@
           "createdAt": {
             "type": "string",
             "format": "date-time"
+          },
+          "authorAvatarVersion": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Versión actual de la foto de perfil, ausente si no hay foto."
+          },
+          "authorDegree": {
+            "type": "string",
+            "maxLength": 160,
+            "description": "Carrera actual del perfil, opcional."
+          }
+        }
+      },
+      "LostResponseCustodyRequestDto": {
+        "type": "object",
+        "required": [
+          "custody"
+        ],
+        "properties": {
+          "custody": {
+            "type": "string",
+            "enum": [
+              "WITH_FINDER",
+              "OFFICE"
+            ]
+          },
+          "location": {
+            "type": "string",
+            "maxLength": 200
           }
         }
       }

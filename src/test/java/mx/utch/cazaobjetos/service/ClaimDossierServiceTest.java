@@ -25,6 +25,7 @@ class ClaimDossierServiceTest {
     @Autowired ClaimQueryService queries;
     @Autowired CreationService creations;
     @Autowired JdbcTemplate db;
+    @Autowired ProfilePhotoService profilePhotos;
     UUID finder,owner,other,teacher,found,claim;
     @BeforeEach void setup() {
         db.execute("TRUNCATE app_user CASCADE");
@@ -37,6 +38,20 @@ class ClaimDossierServiceTest {
     MockMultipartFile png(int width,int height) throws Exception {var out=new ByteArrayOutputStream();ImageIO.write(new BufferedImage(width,height,BufferedImage.TYPE_INT_RGB),"png",out);return new MockMultipartFile("file","private-name.png","image/png",out.toByteArray());}
     ClaimCommentRequestDto comment(String body) {return new ClaimCommentRequestDto(body);}
 
+    @Test void conversationAvatarsAreCurrentAndScopedToItsAuthors() throws Exception {
+        var comment=dossier.comment(owner,claim,comment("Puedo pasar mañana."),null);
+        profilePhotos.replace("owner@utch.edu.mx",png(8,8));
+        db.update("UPDATE app_user SET degree='Mecatrónica' WHERE id=?",owner);
+        var entry=dossier.activity(finder,claim,0,20).items().stream().filter(e->e.id().equals(comment.id())).findFirst().orElseThrow();
+        assertNotNull(entry.actorAvatarVersion());
+        assertEquals("Mecatrónica",entry.actorDegree());
+        assertTrue(dossier.avatar(finder,claim,owner).getContent().length>0);
+        fails(404,()->dossier.avatar(other,claim,owner));
+        profilePhotos.replace("other@utch.edu.mx",png(8,8));
+        fails(404,()->dossier.avatar(finder,claim,other));
+        profilePhotos.delete("owner@utch.edu.mx");
+        assertNull(dossier.activity(finder,claim,0,20).items().stream().filter(e->e.id().equals(comment.id())).findFirst().orElseThrow().actorAvatarVersion());
+    }
     @Test void privateCommentsPreserveAuthorSnapshotAndIdempotency() {
         var first=dossier.comment(owner,claim,comment("  Tengo una foto anterior.  "),"comment-001");
         assertEquals("Tengo una foto anterior.",first.body());

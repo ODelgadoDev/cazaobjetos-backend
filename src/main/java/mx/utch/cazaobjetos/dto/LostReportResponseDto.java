@@ -14,4 +14,4 @@ public record LostReportResponseDto(
         LocalDate lostOn,
         LostStatus status,
         Instant recoveredAt,
-        Instant createdAt, String ownerName, boolean hasResponse) {}
+        Instant createdAt, String ownerName, boolean hasResponse, String ownerDegree) {}

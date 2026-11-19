@@ -23,7 +23,11 @@ public class ProfilePhotoService {
 
     @Transactional(readOnly = true)
     public ProfilePhotoModel content(String email) {
-        return photos.findById(users.userId(email))
+        return content(users.userId(email));
+    }
+    @Transactional(readOnly = true)
+    public ProfilePhotoModel content(UUID userId) {
+        return photos.findById(userId)
                 .orElseThrow(() -> new BusinessException(HttpStatus.NOT_FOUND, "No hay foto de perfil"));
     }
     public void replace(String email, MultipartFile file) {

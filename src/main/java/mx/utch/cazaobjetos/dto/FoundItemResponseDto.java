@@ -22,4 +22,4 @@ public record FoundItemResponseDto(
         String custodyLocation,
         UUID custodyMarkedBy,
         Instant custodyMarkedAt,
-        UUID sourceLostReportId, String reporterName, String responsibleName) {}
+        UUID sourceLostReportId, String reporterName, String responsibleName, String reporterDegree, String responsibleDegree) {}

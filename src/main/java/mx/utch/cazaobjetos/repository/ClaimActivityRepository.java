@@ -5,6 +5,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import mx.utch.cazaobjetos.model.ClaimActivityModel;
 import mx.utch.cazaobjetos.enums.ClaimActivityKind;
 public interface ClaimActivityRepository extends JpaRepository<ClaimActivityModel,UUID> {
+    boolean existsByClaimIdAndActorId(UUID claimId,UUID actorId);
     Page<ClaimActivityModel> findByClaimId(UUID claimId,Pageable page);
     Optional<ClaimActivityModel> findByClaimIdAndActorIdAndKindAndRequestKey(UUID claimId,UUID actorId,ClaimActivityKind kind,String requestKey);
 }

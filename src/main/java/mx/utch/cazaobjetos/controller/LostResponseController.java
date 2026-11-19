@@ -40,6 +40,12 @@ public class LostResponseController {
         return responses.create(lossId,actor,key,request,image==null?null:EvidenceImageUtil.normalize(image));
     }
 
+    @PutMapping("/{responseId}/custody")
+    public LostResponseDto custody(Principal principal,@PathVariable UUID lossId,@PathVariable UUID responseId,
+            @Valid @RequestBody LostResponseCustodyRequestDto request) {
+        return responses.custody(lossId,responseId,actor(principal),request);
+    }
+
     @GetMapping("/{responseId}/comments")
     public List<LostResponseCommentDto> comments(Principal principal,@PathVariable UUID lossId,@PathVariable UUID responseId) {
         return responses.comments(lossId,responseId,actor(principal));
@@ -61,6 +67,13 @@ public class LostResponseController {
     @PostMapping("/{responseId}/cancel")
     public LostResponseDto cancel(Principal principal,@PathVariable UUID lossId,@PathVariable UUID responseId) {
         return responses.decide(lossId,responseId,actor(principal),false);
+    }
+
+    @GetMapping("/{responseId}/authors/{authorId}/photo")
+    public ResponseEntity<byte[]> avatar(Principal principal,@PathVariable UUID lossId,@PathVariable UUID responseId,@PathVariable UUID authorId) {
+        var photo=responses.avatar(lossId,responseId,actor(principal),authorId);
+        return ResponseEntity.ok().contentType(MediaType.IMAGE_JPEG).cacheControl(CacheControl.noStore())
+            .header("X-Content-Type-Options","nosniff").body(photo.getContent());
     }
 
     @GetMapping("/{responseId}/photo")

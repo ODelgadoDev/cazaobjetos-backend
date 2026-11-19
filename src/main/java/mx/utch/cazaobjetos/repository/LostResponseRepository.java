@@ -14,16 +14,17 @@ import org.springframework.stereotype.Repository;
 public class LostResponseRepository {
     private static final String SELECT = """
         SELECT r.id,r.lost_report_id,r.finder_id,f.display_name AS finder_name,l.owner_id,
-               o.display_name AS owner_name,r.location,r.body,r.status,r.created_at,r.photo_type
+               o.display_name AS owner_name,r.location,r.body,r.status,r.created_at,r.photo_type,r.custody,r.custody_location,p.version AS finder_avatar_version,f.degree AS finder_degree
         FROM lost_response r JOIN lost_report l ON l.id=r.lost_report_id
         JOIN app_user f ON f.id=r.finder_id JOIN app_user o ON o.id=l.owner_id
+        LEFT JOIN user_profile_photo p ON p.user_id=r.finder_id
         WHERE r.lost_report_id=?
         """;
     private static final RowMapper<LostResponseDto> RESPONSE = (rs, row) -> new LostResponseDto(
         rs.getObject("id", UUID.class),rs.getObject("lost_report_id", UUID.class),rs.getObject("finder_id", UUID.class),
         rs.getString("finder_name"),rs.getObject("owner_id", UUID.class),rs.getString("owner_name"),rs.getString("location"),
         rs.getString("body"),rs.getString("status"),rs.getObject("created_at",OffsetDateTime.class).toInstant(),
-        rs.getString("photo_type")==null?null:"UPLOAD");
+        rs.getString("photo_type")==null?null:"UPLOAD",rs.getString("custody"),rs.getString("custody_location"),rs.getObject("finder_avatar_version",UUID.class),rs.getString("finder_degree"));
     private final JdbcTemplate db;
 
     public LostResponseRepository(JdbcTemplate db) { this.db=db; }
@@ -41,11 +42,14 @@ public class LostResponseRepository {
                 AND (NOT ? OR status='OPEN'))
             """,Boolean.class,loss,finder,openOnly));
     }
-    public void insert(UUID id, UUID loss, UUID finder, String location, String body, Image photo) {
+    public void insert(UUID id, UUID loss, UUID finder, String location, String body, Image photo, String custody, String custodyLocation) {
         db.update("""
-            INSERT INTO lost_response(id,lost_report_id,finder_id,location,body,status,created_at,photo_type,photo)
-            VALUES(?,?,?,?,?,'OPEN',now(),?,?)
-            """,id,loss,finder,location,body,photo==null?null:photo.type(),photo==null?null:photo.bytes());
+            INSERT INTO lost_response(id,lost_report_id,finder_id,location,body,status,created_at,photo_type,photo,custody,custody_location)
+            VALUES(?,?,?,?,?,'OPEN',now(),?,?,?,?)
+            """,id,loss,finder,location,body,photo==null?null:photo.type(),photo==null?null:photo.bytes(),custody,custodyLocation);
+    }
+    public void changeCustody(UUID response, String custody, String location) {
+        db.update("UPDATE lost_response SET custody=?,custody_location=? WHERE id=?",custody,location,response);
     }
     public void changeStatus(UUID response, String status) {
         db.update("UPDATE lost_response SET status=? WHERE id=?",status,response);
@@ -59,11 +63,12 @@ public class LostResponseRepository {
             (rs,row)->new Photo(rs.getString(1),rs.getBytes(2)),response).stream().findFirst();
     }
     private static final String SELECT_COMMENT = """
-        SELECT c.id,c.author_id,u.display_name,c.body,c.created_at
-        FROM lost_response_comment c JOIN app_user u ON u.id=c.author_id WHERE c.response_id=?
+        SELECT c.id,c.author_id,u.display_name,c.body,c.created_at,p.version AS author_avatar_version,u.degree AS author_degree
+        FROM lost_response_comment c JOIN app_user u ON u.id=c.author_id
+        LEFT JOIN user_profile_photo p ON p.user_id=c.author_id WHERE c.response_id=?
         """;
     private static final RowMapper<LostResponseCommentDto> COMMENT = (rs,row)->new LostResponseCommentDto(
-        rs.getObject(1,UUID.class),rs.getObject(2,UUID.class),rs.getString(3),rs.getString(4),rs.getObject(5,OffsetDateTime.class).toInstant());
+        rs.getObject(1,UUID.class),rs.getObject(2,UUID.class),rs.getString(3),rs.getString(4),rs.getObject(5,OffsetDateTime.class).toInstant(),rs.getObject(6,UUID.class),rs.getString(7));
     public List<LostResponseCommentDto> comments(UUID response) {
         return db.query(SELECT_COMMENT+" ORDER BY c.created_at,c.id",COMMENT,response);
     }

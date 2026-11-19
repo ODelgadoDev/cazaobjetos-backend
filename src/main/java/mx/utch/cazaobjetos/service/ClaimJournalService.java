@@ -39,6 +39,6 @@ public class ClaimJournalService {
             .forEach(claim->event(claim.getId(),actor,ClaimActivityKind.PUBLICATION_EDITED,"El solicitante actualizó su reporte de extravío.",Map.of("before",before,"after",after)));
     }
     public static ClaimActivityDto response(ClaimActivityModel e) {
-        return new ClaimActivityDto(e.getId(),e.getKind(),e.getActorId(),e.getActorName(),e.getBody(),e.getDetailsJson(),e.getEvidenceId(),e.getCreatedAt());
+        return new ClaimActivityDto(e.getId(),e.getKind(),e.getActorId(),e.getActorName(),e.getBody(),e.getDetailsJson(),e.getEvidenceId(),e.getCreatedAt(),e.getActorAvatarVersion(),e.getActorDegree());
     }
 }

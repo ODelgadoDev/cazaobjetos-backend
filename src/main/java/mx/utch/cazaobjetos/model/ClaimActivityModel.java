@@ -22,6 +22,12 @@ public class ClaimActivityModel {
     @Column(name="request_key") private String requestKey;
     @Column(name="request_hash") private String requestHash;
     @Column(name="created_at") private Instant createdAt;
+    @org.hibernate.annotations.Formula("(select p.version from user_profile_photo p where p.user_id=actor_id)")
+    private UUID actorAvatarVersion;
+    @org.hibernate.annotations.Formula("(select u.degree from app_user u where u.id=actor_id)")
+    private String actorDegree;
+    public String getActorDegree() { return actorDegree; }
+    public UUID getActorAvatarVersion() { return actorAvatarVersion; }
     public UUID getId() { return id; }
     public void setId(UUID value) { id=value; }
     public long getSequence() { return sequence; }

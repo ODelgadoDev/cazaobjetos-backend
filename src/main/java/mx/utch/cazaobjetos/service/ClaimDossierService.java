@@ -19,12 +19,14 @@ import static mx.utch.cazaobjetos.util.ValidateUtil.require;
 @Transactional
 public class ClaimDossierService {
     public static final int MAX_EVIDENCE=5;
+    private final ProfilePhotoService profilePhotos;
     private final ItemDataService items;
     private final ClaimActivityRepository activities;
     private final ClaimEvidenceRepository evidence;
     private final ClaimJournalService journal;
     private final ItemEventService audit;
-    public ClaimDossierService(ItemDataService items,ClaimActivityRepository activities,ClaimEvidenceRepository evidence,ClaimJournalService journal,ItemEventService audit) {
+    public ClaimDossierService(ItemDataService items,ClaimActivityRepository activities,ClaimEvidenceRepository evidence,ClaimJournalService journal,ItemEventService audit,ProfilePhotoService profilePhotos) {
+        this.profilePhotos=profilePhotos;
         this.items=items;this.activities=activities;this.evidence=evidence;this.journal=journal;this.audit=audit;
     }
     private ClaimModel access(UUID actor,UUID id,boolean write) {
@@ -48,6 +50,12 @@ public class ClaimDossierService {
         access(actor,claimId,false);
         var image=evidence.findById(evidenceId).orElse(null);
         require(image!=null&&image.getClaimId().equals(claimId),HttpStatus.NOT_FOUND,"Evidencia no disponible");return image;
+    }
+    @Transactional(readOnly=true)
+    public ProfilePhotoModel avatar(UUID actor,UUID claimId,UUID authorId) {
+        access(actor,claimId,false);
+        require(activities.existsByClaimIdAndActorId(claimId,authorId),HttpStatus.NOT_FOUND,"Foto no disponible");
+        return profilePhotos.content(authorId);
     }
     private Optional<ClaimActivityModel> existing(UUID actor,UUID claim,ClaimActivityKind kind,String key,String hash) {
         if(key==null)return Optional.empty();

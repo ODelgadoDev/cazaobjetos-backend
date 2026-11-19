@@ -25,6 +25,12 @@ public class ClaimDossierController {
         dossier.evidence(actor,claimId);
         return ResponseEntity.status(201).body(dossier.upload(actor,claimId,imports.link(request.url()),key,true));
     }
+    @GetMapping("/authors/{authorId}/photo")
+    public ResponseEntity<byte[]> avatar(Principal principal,@PathVariable UUID claimId,@PathVariable UUID authorId) {
+        var photo=dossier.avatar(users.userId(principal.getName()),claimId,authorId);
+        return ResponseEntity.ok().contentType(MediaType.IMAGE_JPEG).cacheControl(CacheControl.noStore())
+            .header("X-Content-Type-Options","nosniff").body(photo.getContent());
+    }
     @GetMapping("/activity")
     public PageResponseDto<ClaimActivityDto> activity(Principal principal,@PathVariable UUID claimId,@RequestParam(defaultValue="0") int page,@RequestParam(defaultValue="20") int pageSize) {
         return dossier.activity(users.userId(principal.getName()),claimId,page,pageSize);

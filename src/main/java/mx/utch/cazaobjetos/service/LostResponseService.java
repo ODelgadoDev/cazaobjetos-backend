@@ -1,6 +1,9 @@
 package mx.utch.cazaobjetos.service;
 
 import java.util.List;
+import java.util.HashMap;
+import java.util.Objects;
+import mx.utch.cazaobjetos.enums.CustodyStatus;
 import java.util.Map;
 import java.util.UUID;
 import mx.utch.cazaobjetos.dto.*;
@@ -19,6 +22,7 @@ import static mx.utch.cazaobjetos.util.ValidateUtil.require;
 @Service
 @Transactional
 public class LostResponseService {
+    private final ProfilePhotoService profilePhotos;
     private final ItemDataService items;
     private final ItemService publications;
     private final LostResponseRepository responses;
@@ -27,7 +31,8 @@ public class LostResponseService {
     private final NotificationEventService notifications;
 
     public LostResponseService(ItemDataService items, ItemService publications, LostResponseRepository responses,
-            CreationService creations, UserDataService users, NotificationEventService notifications) {
+            CreationService creations, UserDataService users, NotificationEventService notifications, ProfilePhotoService profilePhotos) {
+        this.profilePhotos=profilePhotos;
         this.items=items;
         this.publications=publications;
         this.responses=responses;
@@ -47,23 +52,60 @@ public class LostResponseService {
     public LostResponseDto create(UUID lossId, UUID finder, String key, LostResponseRequestDto request, Image photo) {
         String location=request.location().strip();
         String body=request.body().strip();
-        UUID id=creations.run(finder,"loss-response:"+lossId,key,
-            Map.of("location",location,"body",body,"image",photo==null?"":photo.hash()),()->{
+        var custody=request.custody()==null?CustodyStatus.WITH_FINDER:request.custody();
+        String custodyLocation=custodyLocation(custody,request.custodyLocation());
+        var fingerprint=new HashMap<String,Object>(Map.of("location",location,"body",body,"image",photo==null?"":photo.hash()));
+        if(custody!=CustodyStatus.WITH_FINDER) {
+            fingerprint.put("custody",custody.name());
+            fingerprint.put("custodyLocation",custodyLocation);
+        }
+        UUID id=creations.run(finder,"loss-response:"+lossId,key,fingerprint,()->{
                 var loss=items.lockLoss(lossId);
                 require(loss.getStatus()==LostStatus.ACTIVE,HttpStatus.CONFLICT,"El reporte está cerrado");
                 require(!loss.getOwnerId().equals(finder),HttpStatus.CONFLICT,"Este es tu reporte");
                 require(!responses.exists(lossId,finder,true),HttpStatus.CONFLICT,"Ya enviaste una respuesta para este objeto");
                 UUID response=UUID.randomUUID();
-                responses.insert(response,lossId,finder,location,body,photo);
-                notify(loss.getOwnerId(),finder,loss,response,response,NotificationKind.POSSIBLE_MATCH,"Reportó un posible hallazgo");
+                responses.insert(response,lossId,finder,location,body,photo,custody.name(),custodyLocation);
+                notify(loss.getOwnerId(),finder,loss,response,response,NotificationKind.POSSIBLE_MATCH,custody==CustodyStatus.OFFICE?"Encontró tu objeto · lo dejó en oficina":"Encontró tu objeto · entrega personal");
                 return response;
             });
         return participant(lossId,id,finder);
     }
 
+    public LostResponseDto custody(UUID lossId, UUID responseId, UUID actor, LostResponseCustodyRequestDto request) {
+        var loss=items.lockLoss(lossId);
+        var response=participant(lossId,responseId,actor);
+        require(actor.equals(response.finderId()),HttpStatus.FORBIDDEN,"Solo quien encontró el objeto puede cambiar la entrega");
+        require(loss.getStatus()==LostStatus.ACTIVE && response.status().equals("OPEN"),HttpStatus.CONFLICT,"La respuesta está cerrada");
+        var custody=request.custody();
+        String location=custodyLocation(custody,request.location());
+        require(!response.custody().equals("OFFICE") || custody==CustodyStatus.OFFICE,
+            HttpStatus.CONFLICT,"El objeto ya está en oficina");
+        if(response.custody().equals(custody.name()) && Objects.equals(response.custodyLocation(),location)) return response;
+        responses.changeCustody(responseId,custody.name(),location);
+        UUID event=UUID.randomUUID();
+        String action=custody==CustodyStatus.OFFICE?"Lo dejó en oficina":"Entrega personal";
+        responses.insertComment(event,responseId,actor,custody==CustodyStatus.OFFICE?"Entrega en oficina · "+location:"Entrega personal · lo tengo yo");
+        notify(response.ownerId(),actor,loss,responseId,event,NotificationKind.CUSTODY_CHANGED,action);
+        return participant(lossId,responseId,actor);
+    }
+
+    private String custodyLocation(CustodyStatus custody, String location) {
+        require(custody==CustodyStatus.WITH_FINDER || custody==CustodyStatus.OFFICE,HttpStatus.BAD_REQUEST,"Elige entrega personal u oficina");
+        if(custody==CustodyStatus.WITH_FINDER) return null;
+        return location==null || location.isBlank()?"Oficina de profesores · edificio I":location.strip();
+    }
+
     private LostResponseDto participant(UUID loss, UUID response, UUID actor) {
         return responses.find(loss,response).filter(r->actor.equals(r.finderId())||actor.equals(r.ownerId()))
             .orElseThrow(()->new BusinessException(HttpStatus.NOT_FOUND,"Respuesta no disponible"));
+    }
+
+    @Transactional(readOnly=true)
+    public mx.utch.cazaobjetos.model.ProfilePhotoModel avatar(UUID loss, UUID response, UUID actor, UUID author) {
+        var row=participant(loss,response,actor);
+        require(author.equals(row.finderId()) || author.equals(row.ownerId()),HttpStatus.NOT_FOUND,"Foto no disponible");
+        return profilePhotos.content(author);
     }
 
     @Transactional(readOnly=true)
