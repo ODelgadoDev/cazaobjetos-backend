@@ -19,5 +19,8 @@ public class NotificationModel {
     @Column(name="created_at") private Instant createdAt;
     @Column(name="read_at") private Instant readAt;
     @Column(name="cleared_at") private Instant clearedAt;
-    public NotificationResponseDto toResponseDto() { return new NotificationResponseDto(id,kind,targetType,targetId,title,body,createdAt,readAt); }
+    @Column(name="actor_name") private String actorName;
+    @Column(name="object_title") private String objectTitle;
+    @Column(name="response_id") private UUID responseId;
+    public NotificationResponseDto toResponseDto() { return new NotificationResponseDto(id,kind,targetType,targetId,title,body,createdAt,readAt,actorName,objectTitle,title,responseId); }
 }

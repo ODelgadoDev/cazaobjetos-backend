@@ -68,26 +68,37 @@ public class ClaimDossierService {
         audit.audit(actor,id,"CLAIM_COMMENT_ADDED");return ClaimJournalService.response(entry);
     }
     public ClaimEvidenceDto upload(UUID actor,UUID id,MultipartFile file,String key) {
+        return upload(actor,id,file,key,false);
+    }
+    public ClaimEvidenceDto upload(UUID actor,UUID id,MultipartFile file,String key,boolean reference) {
         access(actor,id,true);
         var image=EvidenceImageUtil.normalize(file);
-        var prior=existing(actor,id,ClaimActivityKind.EVIDENCE_ADDED,key,image.hash());
+        var prior=existing(actor,id,ClaimActivityKind.EVIDENCE_ADDED,key,evidenceHash(image,reference));
         if(prior.isPresent()) {
             var saved=evidence.findById(prior.get().getEvidenceId()).orElseThrow();return response(saved);
         }
-        return addPrepared(actor,id,image,key);
+        return addPrepared(actor,id,image,key,reference);
     }
     public void attachInitial(UUID actor,UUID id,List<EvidenceImageUtil.Image> images) {
-        access(actor,id,true);
-        require(images.size()<=MAX_EVIDENCE,HttpStatus.BAD_REQUEST,"Máximo 5 imágenes por reclamo");
-        images.forEach(image->addPrepared(actor,id,image,null));
+        attachInitial(actor,id,images,List.of());
     }
-    private ClaimEvidenceDto addPrepared(UUID actor,UUID id,EvidenceImageUtil.Image image,String key) {
+    public void attachInitial(UUID actor,UUID id,List<EvidenceImageUtil.Image> images,List<EvidenceImageUtil.Image> references) {
+        access(actor,id,true);
+        require(images.size()+references.size()<=MAX_EVIDENCE,HttpStatus.BAD_REQUEST,"Máximo 5 imágenes por reclamo");
+        images.forEach(image->addPrepared(actor,id,image,null,false));
+        references.forEach(image->addPrepared(actor,id,image,null,true));
+    }
+    private static String evidenceHash(EvidenceImageUtil.Image image,boolean reference) {
+        return reference?EvidenceImageUtil.hash(("reference:"+image.hash()).getBytes(StandardCharsets.UTF_8)):image.hash();
+    }
+    private ClaimEvidenceDto addPrepared(UUID actor,UUID id,EvidenceImageUtil.Image image,String key,boolean reference) {
         require(evidence.countByClaimId(id)<MAX_EVIDENCE,HttpStatus.CONFLICT,"El reclamo ya tiene el máximo de 5 evidencias; las enviadas se conservan en el historial");
         var photo=new ClaimEvidenceModel();photo.setId(UUID.randomUUID());photo.setClaimId(id);photo.setAuthorId(actor);
         photo.setContentType(image.type());photo.setContent(image.bytes());photo.setSizeBytes(image.bytes().length);photo.setCreatedAt(Instant.now());
+        photo.setReferenceImage(reference);
         evidence.save(photo);
-        journal.append(id,actor,ClaimActivityKind.EVIDENCE_ADDED,"Se adjuntó una imagen de evidencia.",null,photo.getId(),key,key==null?null:image.hash());
+        journal.append(id,actor,ClaimActivityKind.EVIDENCE_ADDED,"Se adjuntó una imagen de evidencia.",null,photo.getId(),key,key==null?null:evidenceHash(image,reference));
         audit.audit(actor,id,"CLAIM_EVIDENCE_ADDED");return response(photo);
     }
-    private static ClaimEvidenceDto response(ClaimEvidenceModel p) { return new ClaimEvidenceDto(p.getId(),p.getAuthorId(),p.getContentType(),p.getSizeBytes(),p.getCreatedAt()); }
+    private static ClaimEvidenceDto response(ClaimEvidenceModel p) { return new ClaimEvidenceDto(p.getId(),p.getAuthorId(),p.getContentType(),p.getSizeBytes(),p.getCreatedAt(),p.isReferenceImage()); }
 }

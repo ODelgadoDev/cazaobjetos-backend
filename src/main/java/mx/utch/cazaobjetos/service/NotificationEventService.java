@@ -12,17 +12,25 @@ public class NotificationEventService {
     private final NotificationRepository notifications;
     private final ItemDataService items;
     private final PushQueueService push;
-    public NotificationEventService(NotificationRepository notifications,ItemDataService items,PushQueueService push) {this.notifications=notifications;this.items=items;this.push=push;}
-    private void emit(UUID recipient,String key,UUID activity,NotificationKind kind,NotificationTarget type,UUID target,String title,String body,Instant at) {
-        UUID id=UUID.randomUUID();if(notifications.insert(id,recipient,key,activity,kind.name(),type.name(),target,title,body,at)==1)push.notification(recipient,id);
+    private final UserDataService users;
+    public NotificationEventService(NotificationRepository notifications,ItemDataService items,PushQueueService push,UserDataService users) {this.notifications=notifications;this.items=items;this.push=push;this.users=users;}
+    private void emit(UUID recipient,String key,UUID activity,NotificationKind kind,NotificationTarget type,UUID target,String title,String body,Instant at,String actorName,String objectTitle,UUID response) {
+        UUID id=UUID.randomUUID();if(notifications.insert(id,recipient,key,activity,kind.name(),type.name(),target,title,body,at,actorName,objectTitle,response)==1)push.notification(recipient,id);
     }
     public void published(UUID actor,UUID publication,boolean found) {
-        emit(actor,(found?"found:":"loss:")+publication,null,found?NotificationKind.FOUND_PUBLISHED:NotificationKind.LOSS_PUBLISHED,found?NotificationTarget.FOUND_ITEM:NotificationTarget.LOST_REPORT,publication,found?"Hallazgo publicado":"Extravío publicado",found?"Tu hallazgo ya aparece en Explorar. Puedes gestionar las solicitudes desde Reclamos.":"Tu reporte de extravío ya está publicado. Revisa Explorar para buscar tu objeto.",Instant.now());
+        emit(actor,(found?"found:":"loss:")+publication,null,found?NotificationKind.FOUND_PUBLISHED:NotificationKind.LOSS_PUBLISHED,found?NotificationTarget.FOUND_ITEM:NotificationTarget.LOST_REPORT,publication,found?"Hallazgo publicado":"Extravío publicado",found?"Tu hallazgo ya aparece en Explorar. Puedes gestionar las solicitudes desde Reclamos.":"Tu reporte de extravío ya está publicado. Revisa Explorar para buscar tu objeto.",Instant.now(),users.user(actor).getDisplayName(),found?items.found(publication).getTitle():items.lost(publication).getTitle(),null);
     }
     public void possibleMatch(UUID owner,UUID found) {
+        var item=items.found(found);
         emit(owner,"possible-match:"+found,null,NotificationKind.POSSIBLE_MATCH,NotificationTarget.FOUND_ITEM,found,
-            "Posible hallazgo para tu extravío","Alguien publicó un hallazgo desde tu reporte. Compara la ficha y decide si es tu objeto.",Instant.now());
+            "Posible hallazgo para tu extravío","Alguien publicó un hallazgo desde tu reporte. Compara la ficha y decide si es tu objeto.",Instant.now(),users.user(item.getReporterId()).getDisplayName(),item.getTitle(),null);
     }
+    public void lostResponse(UUID recipient,UUID loss,UUID response,UUID event,NotificationKind kind,
+            String action,String actorName,String objectTitle) {
+        emit(recipient,"loss-response:"+kind+":"+event,null,kind,NotificationTarget.LOST_REPORT,loss,
+            action,action,Instant.now(),actorName,objectTitle,response);
+    }
+
     public void activity(ClaimActivityModel entry) {
         if(entry.getKind()==ClaimActivityKind.HISTORY_IMPORTED)return;
         var claim=items.claim(entry.getClaimId());var found=items.found(claim.getFoundItemId());
@@ -62,7 +70,7 @@ public class NotificationEventService {
                 case DELEGATED -> "La gestión del hallazgo fue actualizada. Consulta tu expediente.";
                 default -> "Consulta el estado actual del trámite.";
             };
-            emit(recipient,"activity:"+entry.getId(),entry.getId(),NotificationKind.valueOf(entry.getKind().name()),NotificationTarget.CLAIM,entry.getClaimId(),title,body,entry.getCreatedAt());
+            emit(recipient,"activity:"+entry.getId(),entry.getId(),NotificationKind.valueOf(entry.getKind().name()),NotificationTarget.CLAIM,entry.getClaimId(),title,body,entry.getCreatedAt(),entry.getActorName(),found.getTitle(),null);
         }
     }
 }

@@ -16,6 +16,9 @@ public class ClaimEvidenceModel {
     @Column(name="content") private byte[] content;
     @Column(name="size_bytes") private int sizeBytes;
     @Column(name="created_at") private Instant createdAt;
+    @Column(name="reference_image") private boolean referenceImage;
+    public boolean isReferenceImage() { return referenceImage; }
+    public void setReferenceImage(boolean value) { referenceImage=value; }
     public UUID getId() { return id; }
     public void setId(UUID value) { id=value; }
     public UUID getClaimId() { return claimId; }

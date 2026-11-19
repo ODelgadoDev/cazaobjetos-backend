@@ -15,10 +15,23 @@ public class PhotoImportService {
         this.remote = remote;
     }
     public PhotoResponseDto importPhoto(UUID parent, UUID actor, ImportPhotoRequestDto request) {
-        photos.checkUpload(false, parent, actor);
-        // Network I/O happens outside the database transaction. Upload rechecks permission, status and quota.
-        byte[] bytes = remote.download(request.url());
-        return photos.upload(false, parent, actor, new ImportedFile(bytes), request.referenceImage());
+        return importPhoto(false,parent,actor,request);
+    }
+    public PhotoResponseDto importPhoto(boolean found, UUID parent, UUID actor, ImportPhotoRequestDto request) {
+        photos.checkUpload(found,parent,actor);
+        // Upload rechecks access and quota after downloading.
+        return photos.upload(found,parent,actor,attachment(null,request.url()),request.referenceImage());
+    }
+    public MultipartFile attachment(MultipartFile file, String url) {
+        if (url == null || url.isBlank()) return file;
+        mx.utch.cazaobjetos.util.ValidateUtil.require(file == null,org.springframework.http.HttpStatus.BAD_REQUEST,
+            "Elige un archivo o un enlace");
+        return link(url);
+    }
+    public MultipartFile link(String url) {
+        mx.utch.cazaobjetos.util.ValidateUtil.require(url!=null&&!url.isBlank()&&url.length()<=2048,
+            org.springframework.http.HttpStatus.BAD_REQUEST,"Escribe un enlace de imagen válido");
+        return new ImportedFile(remote.download(url));
     }
     private record ImportedFile(byte[] bytes) implements MultipartFile {
         public String getName() { return "file"; }

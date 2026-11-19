@@ -37,7 +37,7 @@ public class FoundPublicationService {
         UUID id=items.createFound(actor,request.report());
         data.found(id).setSourceLostReportId(request.sourceLostReportId());
         items.custody(actor,id,request.custody());
-        photos.upload(true,id,actor,file);
+        if (file!=null) photos.upload(true,id,actor,file,Boolean.TRUE.equals(request.referenceImage()) || (request.photoUrl()!=null && !request.photoUrl().isBlank()));
         if(owner!=null) {audit.audit(actor,id,"FOUND_SOURCE_LINKED");notifications.possibleMatch(owner,id);}
         return id;
     }

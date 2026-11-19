@@ -297,7 +297,7 @@
     },
     "/found-items/publish": {
       "post": {
-        "summary": "Publicar hallazgo completo con foto, resguardo y posible extravío de origen en una sola transacción",
+        "summary": "Publicar hallazgo con resguardo y foto opcional",
         "operationId": "post_found_items_publish",
         "responses": {
           "201": {
@@ -362,8 +362,7 @@
               "schema": {
                 "type": "object",
                 "required": [
-                  "request",
-                  "file"
+                  "request"
                 ],
                 "properties": {
                   "request": {
@@ -1352,11 +1351,22 @@
                       "type": "string",
                       "format": "binary"
                     }
+                  },
+                  "urls": {
+                    "type": "array",
+                    "items": {
+                      "type": "string",
+                      "maxLength": 2048
+                    },
+                    "maxItems": 5
                   }
                 }
               },
               "encoding": {
                 "request": {
+                  "contentType": "application/json"
+                },
+                "urls": {
                   "contentType": "application/json"
                 }
               }
@@ -4104,6 +4114,591 @@
         },
         "security": []
       }
+    },
+    "/found-items/{parent}/photos/import": {
+      "post": {
+        "summary": "Importar copia JPEG/PNG desde HTTPS público",
+        "operationId": "post_found_items_photos_import",
+        "responses": {
+          "201": {
+            "description": "Operación correcta",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PhotoResponseDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Entrada inválida"
+          },
+          "401": {
+            "description": "Sesión requerida o revocada"
+          },
+          "403": {
+            "description": "Sin permiso o CSRF inválido"
+          },
+          "404": {
+            "description": "Recurso inexistente o no visible"
+          },
+          "409": {
+            "description": "Estado incompatible o clave reutilizada con otros datos"
+          },
+          "429": {
+            "description": "Límite de intentos; Retry-After: 60"
+          }
+        },
+        "parameters": [
+          {
+            "name": "parent",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "X-CSRF-TOKEN",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ImportPhotoRequestDto"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/claims/{claimId}/evidence/import": {
+      "post": {
+        "summary": "Importar imagen privada de referencia",
+        "operationId": "post_claim_evidence_import",
+        "responses": {
+          "201": {
+            "description": "Operación correcta",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ClaimEvidenceDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Entrada inválida"
+          },
+          "401": {
+            "description": "Sesión requerida"
+          },
+          "403": {
+            "description": "Sin permiso"
+          },
+          "404": {
+            "description": "Recurso no disponible"
+          },
+          "409": {
+            "description": "Estado incompatible"
+          }
+        },
+        "parameters": [
+          {
+            "name": "claimId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "X-CSRF-TOKEN",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "Idempotency-Key",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "maxLength": 100
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ImportPhotoRequestDto"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/lost-reports/{lossId}/responses": {
+      "get": {
+        "summary": "Listar respuestas visibles",
+        "operationId": "get_lost_responses",
+        "responses": {
+          "200": {
+            "description": "Operación correcta",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/LostResponseDto"
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Entrada inválida"
+          },
+          "401": {
+            "description": "Sesión requerida"
+          },
+          "403": {
+            "description": "Sin permiso"
+          },
+          "404": {
+            "description": "Recurso no disponible"
+          },
+          "409": {
+            "description": "Estado incompatible"
+          }
+        },
+        "parameters": [
+          {
+            "name": "lossId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ]
+      },
+      "post": {
+        "summary": "Responder en el reporte con foto opcional",
+        "operationId": "post_lost_response",
+        "responses": {
+          "201": {
+            "description": "Operación correcta",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LostResponseDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Entrada inválida"
+          },
+          "401": {
+            "description": "Sesión requerida"
+          },
+          "403": {
+            "description": "Sin permiso"
+          },
+          "404": {
+            "description": "Recurso no disponible"
+          },
+          "409": {
+            "description": "Estado incompatible"
+          }
+        },
+        "parameters": [
+          {
+            "name": "lossId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "X-CSRF-TOKEN",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "Idempotency-Key",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "maxLength": 100
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "request"
+                ],
+                "properties": {
+                  "request": {
+                    "$ref": "#/components/schemas/LostResponseRequestDto"
+                  },
+                  "file": {
+                    "type": "string",
+                    "format": "binary"
+                  }
+                }
+              },
+              "encoding": {
+                "request": {
+                  "contentType": "application/json"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/lost-reports/{lossId}/responses/{responseId}/comments": {
+      "get": {
+        "summary": "Consultar comentarios privados",
+        "operationId": "get_lost_response_comments",
+        "responses": {
+          "200": {
+            "description": "Operación correcta",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/LostResponseCommentDto"
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Entrada inválida"
+          },
+          "401": {
+            "description": "Sesión requerida"
+          },
+          "403": {
+            "description": "Sin permiso"
+          },
+          "404": {
+            "description": "Recurso no disponible"
+          },
+          "409": {
+            "description": "Estado incompatible"
+          }
+        },
+        "parameters": [
+          {
+            "name": "lossId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "responseId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ]
+      },
+      "post": {
+        "summary": "Comentar en la respuesta",
+        "operationId": "post_lost_response_comment",
+        "responses": {
+          "201": {
+            "description": "Operación correcta",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LostResponseCommentDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Entrada inválida"
+          },
+          "401": {
+            "description": "Sesión requerida"
+          },
+          "403": {
+            "description": "Sin permiso"
+          },
+          "404": {
+            "description": "Recurso no disponible"
+          },
+          "409": {
+            "description": "Estado incompatible"
+          }
+        },
+        "parameters": [
+          {
+            "name": "lossId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "responseId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "X-CSRF-TOKEN",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "Idempotency-Key",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "maxLength": 100
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ClaimCommentRequestDto"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/lost-reports/{lossId}/responses/{responseId}/complete": {
+      "post": {
+        "summary": "Confirmar recepción del objeto",
+        "operationId": "post_lost_response_complete",
+        "responses": {
+          "200": {
+            "description": "Operación correcta",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LostResponseDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Entrada inválida"
+          },
+          "401": {
+            "description": "Sesión requerida"
+          },
+          "403": {
+            "description": "Sin permiso"
+          },
+          "404": {
+            "description": "Recurso no disponible"
+          },
+          "409": {
+            "description": "Estado incompatible"
+          }
+        },
+        "parameters": [
+          {
+            "name": "lossId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "responseId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "X-CSRF-TOKEN",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ]
+      }
+    },
+    "/lost-reports/{lossId}/responses/{responseId}/cancel": {
+      "post": {
+        "summary": "Retirar respuesta",
+        "operationId": "post_lost_response_cancel",
+        "responses": {
+          "200": {
+            "description": "Operación correcta",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LostResponseDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Entrada inválida"
+          },
+          "401": {
+            "description": "Sesión requerida"
+          },
+          "403": {
+            "description": "Sin permiso"
+          },
+          "404": {
+            "description": "Recurso no disponible"
+          },
+          "409": {
+            "description": "Estado incompatible"
+          }
+        },
+        "parameters": [
+          {
+            "name": "lossId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "responseId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "X-CSRF-TOKEN",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ]
+      }
+    },
+    "/lost-reports/{lossId}/responses/{responseId}/photo": {
+      "get": {
+        "summary": "Consultar foto privada",
+        "operationId": "get_lost_response_photo",
+        "responses": {
+          "200": {
+            "description": "Operación correcta",
+            "content": {
+              "image/png": {
+                "schema": {
+                  "type": "string",
+                  "format": "binary"
+                }
+              },
+              "image/jpeg": {
+                "schema": {
+                  "type": "string",
+                  "format": "binary"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Entrada inválida"
+          },
+          "401": {
+            "description": "Sesión requerida"
+          },
+          "403": {
+            "description": "Sin permiso"
+          },
+          "404": {
+            "description": "Recurso no disponible"
+          },
+          "409": {
+            "description": "Estado incompatible"
+          }
+        },
+        "parameters": [
+          {
+            "name": "lossId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "responseId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ]
+      }
     }
   },
   "components": {
@@ -4393,6 +4988,14 @@
           },
           "custody": {
             "$ref": "#/components/schemas/CustodyRequestDto"
+          },
+          "photoUrl": {
+            "type": "string",
+            "maxLength": 2048,
+            "nullable": true
+          },
+          "referenceImage": {
+            "type": "boolean"
           }
         },
         "required": [
@@ -4565,6 +5168,25 @@
             "type": "string",
             "format": "date-time",
             "nullable": true
+          },
+          "actorName": {
+            "type": "string",
+            "maxLength": 120,
+            "nullable": true
+          },
+          "objectTitle": {
+            "type": "string",
+            "maxLength": 200,
+            "nullable": true
+          },
+          "action": {
+            "type": "string",
+            "maxLength": 140
+          },
+          "responseId": {
+            "type": "string",
+            "format": "uuid",
+            "nullable": true
           }
         }
       },
@@ -4622,6 +5244,9 @@
           "createdAt": {
             "type": "string",
             "format": "date-time"
+          },
+          "reference": {
+            "type": "boolean"
           }
         }
       },
@@ -4897,7 +5522,7 @@
         "properties": {
           "privateDescription": {
             "type": "string",
-            "minLength": 1,
+            "minLength": 10,
             "maxLength": 2000
           },
           "lostReportId": {
@@ -4982,6 +5607,16 @@
           "sourceLostReportId": {
             "type": "string",
             "format": "uuid",
+            "nullable": true
+          },
+          "reporterName": {
+            "type": "string",
+            "maxLength": 120,
+            "nullable": true
+          },
+          "responsibleName": {
+            "type": "string",
+            "maxLength": 120,
             "nullable": true
           }
         }
@@ -5109,6 +5744,14 @@
           "createdAt": {
             "type": "string",
             "format": "date-time"
+          },
+          "ownerName": {
+            "type": "string",
+            "maxLength": 120,
+            "nullable": true
+          },
+          "hasResponse": {
+            "type": "boolean"
           }
         }
       },
@@ -5460,6 +6103,109 @@
           },
           "hasPrevious": {
             "type": "boolean"
+          }
+        }
+      },
+      "LostResponseRequestDto": {
+        "type": "object",
+        "required": [
+          "location",
+          "body"
+        ],
+        "properties": {
+          "location": {
+            "type": "string",
+            "maxLength": 200
+          },
+          "body": {
+            "type": "string",
+            "maxLength": 2000
+          },
+          "photoUrl": {
+            "type": "string",
+            "maxLength": 2048,
+            "nullable": true
+          }
+        }
+      },
+      "LostResponseDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "lostReportId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "finderId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "finderName": {
+            "type": "string",
+            "maxLength": 120
+          },
+          "ownerId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "ownerName": {
+            "type": "string",
+            "maxLength": 120
+          },
+          "location": {
+            "type": "string",
+            "maxLength": 200
+          },
+          "body": {
+            "type": "string",
+            "maxLength": 2000
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "OPEN",
+              "COMPLETED",
+              "CANCELLED"
+            ]
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "photoType": {
+            "type": "string",
+            "enum": [
+              "UPLOAD"
+            ],
+            "nullable": true
+          }
+        }
+      },
+      "LostResponseCommentDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "authorId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "authorName": {
+            "type": "string",
+            "maxLength": 120
+          },
+          "body": {
+            "type": "string",
+            "maxLength": 2000
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
           }
         }
       }

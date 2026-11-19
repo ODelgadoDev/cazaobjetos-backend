@@ -14,7 +14,17 @@ import mx.utch.cazaobjetos.service.*;
 public class ClaimDossierController {
     private final ClaimDossierService dossier;
     private final UserDataService users;
-    public ClaimDossierController(ClaimDossierService dossier,UserDataService users) { this.dossier=dossier;this.users=users; }
+    private final PhotoImportService imports;
+    public ClaimDossierController(ClaimDossierService dossier,UserDataService users,PhotoImportService imports) {
+        this.dossier=dossier;this.users=users;this.imports=imports;
+    }
+    @PostMapping(value="/evidence/import",consumes=MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<ClaimEvidenceDto> link(Principal principal,@PathVariable UUID claimId,
+            @Valid @RequestBody ImportPhotoRequestDto request,@RequestHeader(value="Idempotency-Key",required=false) String key) {
+        UUID actor=users.userId(principal.getName());
+        dossier.evidence(actor,claimId);
+        return ResponseEntity.status(201).body(dossier.upload(actor,claimId,imports.link(request.url()),key,true));
+    }
     @GetMapping("/activity")
     public PageResponseDto<ClaimActivityDto> activity(Principal principal,@PathVariable UUID claimId,@RequestParam(defaultValue="0") int page,@RequestParam(defaultValue="20") int pageSize) {
         return dossier.activity(users.userId(principal.getName()),claimId,page,pageSize);

@@ -68,6 +68,10 @@ public class FoundItemModel {
     @Column(name="source_lost_report_id") private UUID sourceLostReportId;
     public UUID getSourceLostReportId() {return sourceLostReportId;}
     public void setSourceLostReportId(UUID value) {sourceLostReportId=value;}
+    @org.hibernate.annotations.Formula("(select u.display_name from app_user u where u.id = reporter_id)")
+    private String reporterName;
+    @org.hibernate.annotations.Formula("(select u.display_name from app_user u where u.id = responsible_id)")
+    private String responsibleName;
     public FoundItemModel() {}
 
     public UUID getId() { return id; }
@@ -110,6 +114,6 @@ public class FoundItemModel {
     public void setCreatedAt(Instant createdAt) { this.createdAt = createdAt; }
 
     public FoundItemResponseDto toResponseDto() {
-        return new FoundItemResponseDto(id, reporterId, responsibleId, title, description, category, foundLocation, foundOn, status, custody, officeMarkedBy, officeMarkedAt, createdAt, teacherName, custodyLocation, custodyMarkedBy, custodyMarkedAt, sourceLostReportId);
+        return new FoundItemResponseDto(id, reporterId, responsibleId, title, description, category, foundLocation, foundOn, status, custody, officeMarkedBy, officeMarkedAt, createdAt, teacherName, custodyLocation, custodyMarkedBy, custodyMarkedAt, sourceLostReportId, reporterName, responsibleName);
     }
 }

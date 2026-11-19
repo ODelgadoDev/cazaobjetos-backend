@@ -22,6 +22,6 @@ public interface NotificationRepository extends JpaRepository<NotificationModel,
     @Query(value="UPDATE user_notification n SET cleared_at=:now WHERE "+VISIBLE+" AND n.read_at IS NOT NULL",nativeQuery=true)
     int clearRead(@Param("actor") UUID actor,@Param("now") Instant now);
     @Modifying
-    @Query(value="INSERT INTO user_notification(id,recipient_id,event_key,activity_id,kind,target_type,target_id,title,body,created_at) VALUES(:id,:recipient,:eventKey,:activity,:kind,:targetType,:target,:title,:body,:now) ON CONFLICT(recipient_id,event_key) DO NOTHING",nativeQuery=true)
-    int insert(@Param("id") UUID id,@Param("recipient") UUID recipient,@Param("eventKey") String eventKey,@Param("activity") UUID activity,@Param("kind") String kind,@Param("targetType") String targetType,@Param("target") UUID target,@Param("title") String title,@Param("body") String body,@Param("now") Instant now);
+    @Query(value="INSERT INTO user_notification(id,recipient_id,event_key,activity_id,kind,target_type,target_id,title,body,created_at,actor_name,object_title,response_id) VALUES(:id,:recipient,:eventKey,:activity,:kind,:targetType,:target,:title,:body,:now,:actorName,:objectTitle,:response) ON CONFLICT(recipient_id,event_key) DO NOTHING",nativeQuery=true)
+    int insert(@Param("id") UUID id,@Param("recipient") UUID recipient,@Param("eventKey") String eventKey,@Param("activity") UUID activity,@Param("kind") String kind,@Param("targetType") String targetType,@Param("target") UUID target,@Param("title") String title,@Param("body") String body,@Param("now") Instant now,@Param("actorName") String actorName,@Param("objectTitle") String objectTitle,@Param("response") UUID response);
 }

@@ -20,14 +20,16 @@ public class ItemService {
     private final ClaimJournalService journal;
     private final NotificationEventService notifications;
     private final MilestoneEmailService milestoneMail;
+    private final mx.utch.cazaobjetos.repository.LostResponseRepository responses;
 
-    public ItemService(ItemDataService data, UserDataService users, ItemEventService events, ClaimJournalService journal, NotificationEventService notifications, MilestoneEmailService milestoneMail) {
+    public ItemService(ItemDataService data, UserDataService users, ItemEventService events, ClaimJournalService journal, NotificationEventService notifications, MilestoneEmailService milestoneMail, mx.utch.cazaobjetos.repository.LostResponseRepository responses) {
         this.data = data;
         this.users = users;
         this.events = events;
         this.journal = journal;
         this.notifications = notifications;
         this.milestoneMail=milestoneMail;
+        this.responses=responses;
     }
 
     private void available(FoundItemModel item) {
@@ -44,9 +46,12 @@ public class ItemService {
         return item.toResponseDto();
     }
     @Transactional(readOnly = true)
-    public LostReportResponseDto lost(UUID id) {
+    public LostReportResponseDto lost(UUID id) { return lost(id,null); }
+    @Transactional(readOnly = true)
+    public LostReportResponseDto lost(UUID id, UUID actor) {
         var loss = data.lost(id);
-        require(loss.getStatus() != LostStatus.WITHDRAWN, HttpStatus.NOT_FOUND, "Publicación no disponible");
+        boolean participant = actor != null && responses.exists(id,actor,false);
+        require(loss.getStatus() != LostStatus.WITHDRAWN || participant, HttpStatus.NOT_FOUND, "Publicación no disponible");
         return loss.toResponseDto();
     }
     public void editFound(UUID actor, UUID id, ReportRequestDto request) {
@@ -95,6 +100,7 @@ public class ItemService {
         editableLoss(actor, loss);
         require(!data.hasActiveLinkedClaim(id),HttpStatus.CONFLICT,"Resuelve o cancela el reclamo vinculado antes de retirar");
         loss.setStatus(LostStatus.WITHDRAWN);
+        responses.cancelOpen(id);
         events.audit(actor, id, "LOSS_WITHDRAWN");
     }
     @Transactional(readOnly = true)
@@ -234,6 +240,7 @@ public class ItemService {
         events.audit(actor, id, "LOSS_RECOVERED_EXTERNALLY");
     }
     private void recover(LostReportModel loss) {
+        responses.cancelOpen(loss.getId());
         loss.setStatus(LostStatus.RECOVERED);
         loss.setRecoveredAt(Instant.now());
     }

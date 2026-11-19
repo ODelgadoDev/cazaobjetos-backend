@@ -22,8 +22,9 @@ public class PhotoService {
     private final PhotoDataService photos;
     private final ItemDataService items;
     private final ItemEventService events;
-    public PhotoService(PhotoDataService photos, ItemDataService items, ItemEventService events) {
-        this.photos=photos;this.items=items;this.events=events;
+    private final mx.utch.cazaobjetos.repository.LostResponseRepository responses;
+    public PhotoService(PhotoDataService photos, ItemDataService items, ItemEventService events, mx.utch.cazaobjetos.repository.LostResponseRepository responses) {
+        this.photos=photos;this.items=items;this.events=events;this.responses=responses;
     }
     private void access(boolean found,UUID parent,UUID actor,boolean write) {
         // Parent locks serialize upload count, withdrawal, delegation and claim creation.
@@ -40,7 +41,7 @@ public class PhotoService {
                 require(actor.equals(loss.getOwnerId()),HttpStatus.FORBIDDEN,"Solo el dueño puede modificar las fotos");
                 require(loss.getStatus()==LostStatus.ACTIVE,HttpStatus.CONFLICT,"El extravío no está activo");
                 require(!items.hasActiveLinkedClaim(parent),HttpStatus.CONFLICT,"Resuelve o cancela el reclamo vinculado primero");
-            } else require(loss.getStatus()!=LostStatus.WITHDRAWN || actor.equals(loss.getOwnerId()),HttpStatus.NOT_FOUND,"Foto no disponible");
+            } else require(loss.getStatus()!=LostStatus.WITHDRAWN || actor.equals(loss.getOwnerId()) || responses.exists(parent,actor,false),HttpStatus.NOT_FOUND,"Foto no disponible");
         }
     }
     public List<PhotoResponseDto> list(boolean found,UUID parent,UUID actor) {
@@ -72,7 +73,7 @@ public class PhotoService {
         var image=normalize(file);
         var photo=new PublicationPhotoModel();photo.setId(UUID.randomUUID());
         if(found) photo.setFoundItemId(parent);else photo.setLostReportId(parent);
-        photo.setContentType(image.type());photo.setContent(image.bytes());photo.setSizeBytes(image.bytes().length);photo.setCreatedAt(Instant.now());photo.setReferenceImage(!found && referenceImage);
+        photo.setContentType(image.type());photo.setContent(image.bytes());photo.setSizeBytes(image.bytes().length);photo.setCreatedAt(Instant.now());photo.setReferenceImage(referenceImage);
         photos.save(photo);events.audit(actor,parent,"PHOTO_ADDED_"+photo.getId());
         return new PhotoResponseDto(photo.getId(),photo.getContentType(),photo.getSizeBytes(),photo.getCreatedAt(),photo.isReferenceImage());
     }

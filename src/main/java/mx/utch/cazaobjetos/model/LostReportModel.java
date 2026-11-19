@@ -42,6 +42,12 @@ public class LostReportModel {
     @Column(name = "created_at")
     private Instant createdAt;
 
+    @org.hibernate.annotations.Formula("(select u.display_name from app_user u where u.id = owner_id)")
+    private String ownerName;
+
+    @org.hibernate.annotations.Formula("(exists (select 1 from lost_response r where r.lost_report_id = id and r.status = 'OPEN'))")
+    private boolean hasResponse;
+
     public LostReportModel() {}
 
     public UUID getId() { return id; }
@@ -75,6 +81,6 @@ public class LostReportModel {
     public void setCreatedAt(Instant createdAt) { this.createdAt = createdAt; }
 
     public LostReportResponseDto toResponseDto() {
-        return new LostReportResponseDto(id, ownerId, title, description, category, lostLocation, lostOn, status, recoveredAt, createdAt);
+        return new LostReportResponseDto(id, ownerId, title, description, category, lostLocation, lostOn, status, recoveredAt, createdAt, ownerName, hasResponse);
     }
 }

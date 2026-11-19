@@ -16,7 +16,9 @@ public class FoundItemController {
     private final CatalogService catalog;
     private final UserDataService users;
 
-    public FoundItemController(ItemService service, UserDataService users, CatalogService catalog, CreationService creations) {
+    private final PhotoImportService imports;
+    public FoundItemController(ItemService service, UserDataService users, CatalogService catalog, CreationService creations, PhotoImportService imports) {
+        this.imports=imports;
         this.creations=creations;
         this.service = service;
         this.catalog = catalog;
@@ -51,8 +53,8 @@ public class FoundItemController {
     }
     @PostMapping(value="/publish",consumes=MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<IdResponseDto> publish(@RequestHeader(value="Idempotency-Key",required=false) String key,Principal principal,
-            @Valid @RequestPart("request") FoundPublicationRequestDto request,@RequestPart("file") org.springframework.web.multipart.MultipartFile file) {
-        return ResponseEntity.status(201).body(new IdResponseDto(creations.publishFound(users.userId(principal.getName()),key,request,file)));
+            @Valid @RequestPart("request") FoundPublicationRequestDto request,@RequestPart(value="file",required=false) org.springframework.web.multipart.MultipartFile file) {
+        return ResponseEntity.status(201).body(new IdResponseDto(creations.publishFound(users.userId(principal.getName()),key,request,imports.attachment(file,request.photoUrl()))));
     }
     @PostMapping("/{id}/office")
     public ResponseEntity<Void> office(Principal principal, @PathVariable UUID id) {
@@ -70,8 +72,14 @@ public class FoundItemController {
     }
     @PostMapping(value="/{id}/claims",consumes=MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<IdResponseDto> claimWithEvidence(@RequestHeader(value="Idempotency-Key",required=false) String key,Principal principal,@PathVariable UUID id,
-            @Valid @RequestPart("request") ClaimRequestDto request,@RequestPart(value="files",required=false) List<org.springframework.web.multipart.MultipartFile> files) {
-        return ResponseEntity.status(201).body(new IdResponseDto(creations.claimWithEvidence(users.userId(principal.getName()),id,key,request,files==null?List.of():files)));
+            @Valid @RequestPart("request") ClaimRequestDto request,@RequestPart(value="files",required=false) List<org.springframework.web.multipart.MultipartFile> files,
+            @RequestPart(value="urls",required=false) List<String> urls) {
+        var local=files==null?List.<org.springframework.web.multipart.MultipartFile>of():files;
+        var links=urls==null?List.<String>of():urls;
+        mx.utch.cazaobjetos.util.ValidateUtil.require(local.size()+links.size()<=ClaimDossierService.MAX_EVIDENCE,
+            HttpStatus.BAD_REQUEST,"Máximo 5 imágenes por reclamo");
+        var remote=links.stream().map(url->imports.link(url)).toList();
+        return ResponseEntity.status(201).body(new IdResponseDto(creations.claimWithEvidence(users.userId(principal.getName()),id,key,request,local,remote)));
     }
     @PutMapping("/{id}/custody")
     public ResponseEntity<Void> custody(Principal principal,@PathVariable UUID id,@Valid @RequestBody CustodyRequestDto request) {

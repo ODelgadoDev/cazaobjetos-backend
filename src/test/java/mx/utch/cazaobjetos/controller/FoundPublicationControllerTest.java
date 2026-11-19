@@ -72,10 +72,14 @@ class FoundPublicationControllerTest {
         return owner.send(req.POST(HttpRequest.BodyPublishers.ofByteArray(out.toByteArray())).build(),HttpResponse.BodyHandlers.ofByteArray());
     }
     String publication(UUID source) {return "{\"report\":{\"title\":\"Mochila\",\"description\":\"Descripción visible\",\"category\":\"OTHER\",\"location\":\"I-15\",\"occurredOn\":\""+LocalDate.now()+"\"},\"sourceLostReportId\":"+(source==null?"null":"\""+source+"\"")+",\"custody\":{\"custody\":\"WITH_FINDER\"}}";}
-    @Test void publicationRequiresCsrfARealImageAndValidNestedFields() throws Exception {
+    @Test void publicationRequiresCsrfAndValidNestedFieldsButPhotoIsOptional() throws Exception {
         String route="/found-items/publish",body=publication(null);long before=db.queryForObject("SELECT count(*) FROM found_item",Long.class);
-        assertEquals(403,multipart(route,body,List.of(image(false)),false,null).statusCode());assertEquals(400,multipart(route,body,List.of(),true,null).statusCode());assertEquals(415,multipart(route,body,List.of("fake".getBytes()),true,null).statusCode());assertEquals(400,multipart(route,body.replace("Mochila",""),List.of(image(false)),true,null).statusCode());
+        assertEquals(403,multipart(route,body,List.of(image(false)),false,null).statusCode());assertEquals(415,multipart(route,body,List.of("fake".getBytes()),true,null).statusCode());assertEquals(400,multipart(route,body.replace("Mochila",""),List.of(image(false)),true,null).statusCode());
         assertEquals(before,db.queryForObject("SELECT count(*) FROM found_item",Long.class));
+        var created=multipart(route,body,List.of(),true,"without-photo-001");
+        assertEquals(201,created.statusCode());
+        String id=json.readTree(created.body()).get("id").asText();
+        assertEquals(0,json.readTree(get(owner,"/found-items/"+id+"/photos").body()).size());
     }
     @Test void multipartPublicationIsAtomicAndRetryReturnsSameIdentifier() throws Exception {
         String body=publication(null);var first=multipart("/found-items/publish",body,List.of(image(false)),true,"publish-http-001");assertEquals(201,first.statusCode(),new String(first.body()));String id=json.readTree(first.body()).get("id").asText();assertEquals(id,json.readTree(multipart("/found-items/publish",body,List.of(image(false)),true,"publish-http-001").body()).get("id").asText());

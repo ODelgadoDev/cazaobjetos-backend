@@ -29,8 +29,8 @@ public class LostReportController {
         return ResponseEntity.ok(catalog.lost(query));
     }
     @GetMapping("/{id}")
-    public ResponseEntity<LostReportResponseDto> findById(@PathVariable UUID id) {
-        return ResponseEntity.ok(service.lost(id));
+    public ResponseEntity<LostReportResponseDto> findById(Principal principal,@PathVariable UUID id) {
+        return ResponseEntity.ok(service.lost(id,users.userId(principal.getName())));
     }
     @GetMapping("/{id}/matches")
     public PageResponseDto<FoundItemResponseDto> matches(Principal principal,@PathVariable UUID id,@RequestParam(defaultValue="0") int page,@RequestParam(defaultValue="20") int pageSize) {
