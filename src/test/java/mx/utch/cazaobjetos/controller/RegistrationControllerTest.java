@@ -54,13 +54,13 @@ class RegistrationControllerTest {
         assertEquals(202,post("/forgot-password","{\"email\":\"absent@utch.edu.mx\"}",true,false));
         assertEquals(202,post("/forgot-password","{\"email\":\"a1234567890@utch.edu.mx\"}",true,false));
         String code=Arrays.stream(db.queryForObject("SELECT body FROM email_outbox WHERE event_key LIKE 'RESET:%' LIMIT 1",String.class).split("\\R")).filter(x->x.matches("[A-Za-z0-9_-]{43}")).findFirst().orElseThrow();
-        assertEquals(204,post("/reset-password","{\"token\":\""+code+"\",\"newPassword\":\"New-password-2026\"}",true,false));
+        assertEquals(204,post("/reset-password","{\"token\":\""+code+"\",\"newPassword\":\"Nueva-12\"}",true,false));
         assertEquals(401,me(first));assertEquals(401,me(second));
         assertEquals(401,post("/login",login,true,true));
-        assertEquals(204,post("/login",login.replace("clave-prueba-123","New-password-2026"),true,true));csrf();
-        assertEquals(204,post("/change-password","{\"currentPassword\":\"New-password-2026\",\"newPassword\":\"Next-password-2026\"}",true,false));
+        assertEquals(204,post("/login",login.replace("clave-prueba-123","Nueva-12"),true,true));csrf();
+        assertEquals(204,post("/change-password","{\"currentPassword\":\"Nueva-12\",\"newPassword\":\"Otra-123\"}",true,false));
         assertEquals(401,me(client));csrf();
-        assertEquals(204,post("/login",login.replace("clave-prueba-123","Next-password-2026"),true,true));
+        assertEquals(204,post("/login",login.replace("clave-prueba-123","Otra-123"),true,true));
     }
     @Test void disablingAccountOrChangingRoleVersionRevokesSession() throws Exception {
         registerAndVerify();assertEquals(204,post("/login","username=a1234567890%40utch.edu.mx&password=clave-prueba-123",true,true));
@@ -86,7 +86,7 @@ class RegistrationControllerTest {
     }
     @Test void institutionalAccountWithoutMatriculaOrBuildingHasBaseAccess() throws Exception {
         String email="docente.prueba@utch.edu.mx";
-        String form=registration().replace("a1234567890@utch.edu.mx",email).replace(",\"building\":\"I\"", "");
+        String form=registration().replace("clave-prueba-123","Prueba1!").replace("a1234567890@utch.edu.mx",email).replace(",\"building\":\"I\"", "");
         assertEquals(202,post("/register",form,true,false));
         var user=db.queryForMap("SELECT role,building,degree FROM app_user WHERE email=?",email);
         assertEquals("STUDENT",user.get("role"));
@@ -102,7 +102,9 @@ class RegistrationControllerTest {
     @Test void registrationRequiresCsrfAndValidInputs() throws Exception {
         assertEquals(403,post("/register",registration(),false,false));
         assertEquals(400,post("/register",registration().replace("utch.edu.mx","gmail.com"),true,false));
-        assertEquals(400,post("/register",registration().replace("clave-prueba-123","short"),true,false));
+        for(String invalid : List.of("Corta1!", "Letras!", "Ningundigito!", "SinSimbolo1", "Espacio 1")) {
+            assertEquals(400,post("/register",registration().replace("clave-prueba-123",invalid),true,false));
+        }
         assertEquals(400,post("/register",registration().replace("Tecnologías de la Información","   "),true,false));
         assertEquals(400,post("/verify-email","{\"token\":\"invalid\"}",true,false));
         assertEquals(0L,db.queryForObject("SELECT count(*) FROM app_user",Long.class));

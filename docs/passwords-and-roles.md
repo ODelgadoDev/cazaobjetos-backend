@@ -14,7 +14,7 @@ Una solicitud con email válido devuelve el mismo 202 si la cuenta existe, está
 
 Los códigos contienen 256 bits aleatorios, vencen en 30 minutos y se consumen una sola vez, incluso ante solicitudes simultáneas. `password_reset` solo almacena el hash SHA-256. Se aplica un intervalo de 60 segundos entre emisiones; emitir otro código invalida el anterior. Los mensajes de la outbox contienen el código para entregarlo, por lo que la base y Mailpit son recursos privados. No se devuelve el código desde la API ni se imprime en logs.
 
-Código inválido, vencido, reemplazado o consumido → 400. Contraseña: mínimo 12 caracteres y máximo 72 bytes UTF-8; espacios iniciales/finales forman parte de la contraseña y no se recortan. BCrypt conserva la política existente.
+Código inválido, vencido, reemplazado o consumido → 400. Contraseña: mínimo 8 caracteres, un número, un símbolo y máximo 72 bytes UTF-8; espacios iniciales/finales forman parte de la contraseña y no se recortan. BCrypt conserva la política existente.
 
 ## Cambio con sesión iniciada
 

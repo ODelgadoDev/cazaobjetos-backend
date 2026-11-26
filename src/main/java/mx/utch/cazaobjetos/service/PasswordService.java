@@ -10,6 +10,7 @@ import mx.utch.cazaobjetos.repository.*;
 import mx.utch.cazaobjetos.model.*;
 import mx.utch.cazaobjetos.enums.EmailStatus;
 import mx.utch.cazaobjetos.exception.BusinessException;
+import mx.utch.cazaobjetos.util.PasswordPolicy;
 import mx.utch.cazaobjetos.util.VerificationTokenUtil;
 import static mx.utch.cazaobjetos.util.ValidateUtil.require;
 @Service
@@ -41,12 +42,9 @@ public class PasswordService {
         mail.setStatus(EmailStatus.PENDING);mail.setCreatedAt(now);mail.setNextAttemptAt(now);outbox.save(mail);
     }
     private BusinessException invalid() { return new BusinessException(HttpStatus.BAD_REQUEST,"Código inválido, vencido o ya utilizado"); }
-    private void validatePassword(String password) {
-        require(password!=null && !password.isBlank() && password.length()>=12 && password.getBytes(StandardCharsets.UTF_8).length<=72,
-            HttpStatus.BAD_REQUEST,"La contraseña requiere al menos 12 caracteres y máximo 72 bytes UTF-8");
-    }
     private void update(UserModel user,String password) {
-        validatePassword(password);user.setPasswordHash(passwords.encode(password));
+        PasswordPolicy.validate(password);
+        user.setPasswordHash(passwords.encode(password));
         user.setCredentialsVersion(user.getCredentialsVersion()+1);
         resets.findById(user.getId()).ifPresent(reset->reset.setConsumedAt(Instant.now()));
         events.audit(user.getId(),user.getId(),"PASSWORD_CHANGED");

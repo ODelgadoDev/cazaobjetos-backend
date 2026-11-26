@@ -42,11 +42,13 @@ class PasswordServiceTest {
         db.update("UPDATE password_reset SET expires_at=now()-interval '1 second'");fails(()->service.reset(first,newPassword));
         db.update("UPDATE password_reset SET sent_at=now()-interval '2 minutes'");service.forgot("password@utch.edu.mx");String second=token();
         fails(()->service.reset(first,newPassword));fails(()->service.reset(second,"é".repeat(40)));fails(()->service.reset(second,"short"));
+        fails(()->service.reset(second,"SinSimbolo1"));
         service.reset(second,newPassword);
     }
     @Test void changeRequiresCurrentPasswordAndInvalidatesPendingReset() {
         service.forgot("password@utch.edu.mx");String token=token();
         fails(()->service.change(user,"incorrect",newPassword));
+        fails(()->service.change(user,oldPassword,"SinNumero!"));
         assertEquals(0L,db.queryForObject("SELECT credentials_version FROM app_user",Long.class));
         service.change(user,oldPassword,newPassword);fails(()->service.reset(token,oldPassword));
     }

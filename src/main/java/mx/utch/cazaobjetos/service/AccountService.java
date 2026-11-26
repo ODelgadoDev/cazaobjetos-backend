@@ -1,6 +1,5 @@
 package mx.utch.cazaobjetos.service;
 
-import java.nio.charset.StandardCharsets;
 import java.time.*;
 import java.util.*;
 import org.springframework.http.HttpStatus;
@@ -12,6 +11,7 @@ import mx.utch.cazaobjetos.enums.*;
 import mx.utch.cazaobjetos.exception.BusinessException;
 import mx.utch.cazaobjetos.model.*;
 import mx.utch.cazaobjetos.repository.*;
+import mx.utch.cazaobjetos.util.PasswordPolicy;
 import mx.utch.cazaobjetos.util.VerificationTokenUtil;
 import static mx.utch.cazaobjetos.util.ValidateUtil.require;
 
@@ -61,8 +61,7 @@ public class AccountService {
         String degree=academicField(request.degree(),160,"carrera o área");
         String building=request.building()==null || request.building().isBlank()
                 ? null : academicField(request.building(),80,"edificio");
-        require(request.password().getBytes(StandardCharsets.UTF_8).length <= 72,
-                HttpStatus.BAD_REQUEST, "La contraseña no puede superar 72 bytes UTF-8");
+        PasswordPolicy.validate(request.password());
         require(!users.existsByEmail(email), HttpStatus.CONFLICT, "Este correo ya está registrado. Inicia sesión o verifica tu cuenta.");
         UserModel user = new UserModel();
         user.setId(UUID.randomUUID());
