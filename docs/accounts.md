@@ -11,7 +11,7 @@ Incremento del 5 de noviembre de 2026. Se conserva la estructura controller → 
 5. POST `/api/v1/auth/verify-email`, JSON `{"token":"código"}` → 204.
 6. Login habitual por formulario; GET CSRF de nuevo después del login.
 
-Todos los POST requieren token CSRF y la cookie asociada. El registro acepta únicamente el dominio exacto `utch.edu.mx`, sin imponer el prefijo `a` ni una matrícula que todavía no hemos confirmado. La contraseña requiere al menos 8 caracteres, un número y un símbolo, con un máximo de 72 bytes UTF-8 por BCrypt. El rol se fija en STUDENT; docente/secretaria requieren asignación autorizada.
+Todos los POST requieren token CSRF y la cookie asociada. El registro acepta un correo válido de cualquier dominio. El correo estudiantil UTCH permite obtener la matrícula. La contraseña requiere al menos 8 caracteres, un número y un símbolo, con un máximo de 72 bytes UTF-8 por BCrypt. El rol se fija en STUDENT; docente/secretaria requieren asignación autorizada.
 
 Ejemplo de registro (cuenta ficticia, buzón de pruebas):
 

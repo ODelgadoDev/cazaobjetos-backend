@@ -73,8 +73,8 @@ class AccountServiceTest {
         assertEquals(1L, db.queryForObject("SELECT count(*) FROM email_outbox", Long.class));
         assertEquals(false, db.queryForObject("SELECT enabled FROM app_user", Boolean.class));
     }
-    @Test void nonInstitutionalDomainAndTooManyPasswordBytesAreRejected() {
-        for (String email : List.of("test@gmail.com", "test@utch.edu.mx.evil.com", "test@sub.utch.edu.mx")) {
+    @Test void malformedEmailAndTooManyPasswordBytesAreRejected() {
+        for (String email : List.of("test", "test@@example.com", "test @example.com")) {
             fails(400, () -> accounts.register(new RegisterRequestDto(email, "clave-prueba-123", "Ana", " TI ", " I ")));
         }
         fails(400, () -> accounts.register(new RegisterRequestDto(EMAIL, "é".repeat(40), "Ana", " TI ", " I ")));

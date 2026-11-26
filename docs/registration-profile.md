@@ -1,6 +1,6 @@
 # Registro de alumnos y datos académicos
 
-El registro público admite correos del dominio `utch.edu.mx` y concede los permisos comunes de `STUDENT`. Si la dirección tiene la forma `a` + 10 dígitos + `@utch.edu.mx`, el perfil muestra los diez dígitos como matrícula y conserva los ceros iniciales. Las otras direcciones institucionales se registran sin matrícula.
+El registro público admite correos válidos de cualquier dominio y concede los permisos comunes de `STUDENT`. Si la dirección tiene la forma `a` + 10 dígitos + `@utch.edu.mx`, el perfil muestra los diez dígitos como matrícula y conserva los ceros iniciales. Las otras direcciones se registran sin matrícula.
 
 `POST /api/v1/auth/register` requiere:
 

@@ -38,21 +38,23 @@ class RegistrationControllerTest {
         return client.send(request.POST(HttpRequest.BodyPublishers.ofString(body)).build(),HttpResponse.BodyHandlers.ofString()).statusCode();
     }
     String registration() { return "{\"email\":\"a1234567890@utch.edu.mx\",\"password\":\"clave-prueba-123\",\"displayName\":\"Alumno\",\"degree\":\"Tecnologías de la Información\",\"building\":\"I\",\"role\":\"SECRETARY\"}"; }
-    void registerAndVerify() throws Exception {
-        assertEquals(202,post("/register",registration(),true,false));
+    void registerAndVerify() throws Exception { registerAndVerify(registration()); }
+    void registerAndVerify(String form) throws Exception {
+        assertEquals(202,post("/register",form,true,false));
         String code=Arrays.stream(db.queryForObject("SELECT body FROM email_outbox WHERE event_key LIKE 'VERIFY:%' LIMIT 1",String.class).split("\\R")).filter(x->x.matches("[A-Za-z0-9_-]{43}")).findFirst().orElseThrow();
         assertEquals(204,post("/verify-email","{\"token\":\""+code+"\"}",true,false));
     }
     int me(HttpClient current) throws Exception { return current.send(HttpRequest.newBuilder(URI.create(base()+"/me")).GET().build(),HttpResponse.BodyHandlers.ofString()).statusCode(); }
     @Test void recoveryRevokesAllSessionsAndNewPasswordWorks() throws Exception {
-        registerAndVerify();String login="username=a1234567890%40utch.edu.mx&password=clave-prueba-123";
+        registerAndVerify(registration().replace("a1234567890@utch.edu.mx","docente.recuperacion@example.org"));
+        String login="username=docente.recuperacion%40example.org&password=clave-prueba-123";
         assertEquals(204,post("/login",login,true,true));csrf();HttpClient first=client;
         client=HttpClient.newBuilder().cookieHandler(new CookieManager(null,CookiePolicy.ACCEPT_ALL)).build();csrf();
         assertEquals(204,post("/login",login,true,true));csrf();HttpClient second=client;
         client=HttpClient.newBuilder().cookieHandler(new CookieManager(null,CookiePolicy.ACCEPT_ALL)).build();csrf();
-        assertEquals(403,post("/forgot-password","{\"email\":\"a1234567890@utch.edu.mx\"}",false,false));
+        assertEquals(403,post("/forgot-password","{\"email\":\"docente.recuperacion@example.org\"}",false,false));
         assertEquals(202,post("/forgot-password","{\"email\":\"absent@utch.edu.mx\"}",true,false));
-        assertEquals(202,post("/forgot-password","{\"email\":\"a1234567890@utch.edu.mx\"}",true,false));
+        assertEquals(202,post("/forgot-password","{\"email\":\"docente.recuperacion@example.org\"}",true,false));
         String code=Arrays.stream(db.queryForObject("SELECT body FROM email_outbox WHERE event_key LIKE 'RESET:%' LIMIT 1",String.class).split("\\R")).filter(x->x.matches("[A-Za-z0-9_-]{43}")).findFirst().orElseThrow();
         assertEquals(204,post("/reset-password","{\"token\":\""+code+"\",\"newPassword\":\"Nueva-12\"}",true,false));
         assertEquals(401,me(first));assertEquals(401,me(second));
@@ -84,8 +86,8 @@ class RegistrationControllerTest {
         assertEquals("I",json.readTree(me.body()).get("building").asText());
         assertFalse(me.body().contains("passwordHash"));
     }
-    @Test void institutionalAccountWithoutMatriculaOrBuildingHasBaseAccess() throws Exception {
-        String email="docente.prueba@utch.edu.mx";
+    @Test void externalEmailAccountWithoutMatriculaOrBuildingHasBaseAccess() throws Exception {
+        String email="docente.prueba@example.org";
         String form=registration().replace("clave-prueba-123","Prueba1!").replace("a1234567890@utch.edu.mx",email).replace(",\"building\":\"I\"", "");
         assertEquals(202,post("/register",form,true,false));
         var user=db.queryForMap("SELECT role,building,degree FROM app_user WHERE email=?",email);
@@ -101,7 +103,7 @@ class RegistrationControllerTest {
     }
     @Test void registrationRequiresCsrfAndValidInputs() throws Exception {
         assertEquals(403,post("/register",registration(),false,false));
-        assertEquals(400,post("/register",registration().replace("utch.edu.mx","gmail.com"),true,false));
+        assertEquals(400,post("/register",registration().replace("@utch.edu.mx","@"),true,false));
         for(String invalid : List.of("Corta1!", "Letras!", "Ningundigito!", "SinSimbolo1", "Espacio 1")) {
             assertEquals(400,post("/register",registration().replace("clave-prueba-123",invalid),true,false));
         }

@@ -50,9 +50,9 @@ public class AccountService {
     }
 
     private String normalize(String raw) {
-        String email = raw.strip().toLowerCase(Locale.ROOT);
-        require(email.matches("[a-z0-9.!#$%&'*+/=?^_`{|}~-]+@utch\\.edu\\.mx"),
-                HttpStatus.BAD_REQUEST, "Usa un correo del dominio utch.edu.mx");
+        String email = raw == null ? "" : raw.strip().toLowerCase(Locale.ROOT);
+        require(email.length() <= 254 && email.matches("[^@\\s]+@[^@\\s]+"),
+                HttpStatus.BAD_REQUEST, "Escribe un correo válido");
         return email;
     }
 
