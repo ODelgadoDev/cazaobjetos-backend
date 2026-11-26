@@ -132,11 +132,12 @@ class ProfileControllerTest {
         assertEquals(0L, db.queryForObject("SELECT count(*) FROM audit_event", Long.class));
     }
 
-    @Test void careerAndBuildingCannotBeCleared() throws Exception {
-        for(String body:List.of("{\"displayName\":\"Alumno\",\"degree\":\"\",\"building\":\"I\"}",
-                "{\"displayName\":\"Alumno\",\"degree\":\"TI\",\"building\":\"   \"}"))
-            assertEquals(400,putProfile(body,true).statusCode());
-        assertEquals("Perfil anterior",json.readTree(get("/auth/me").body()).get("displayName").asText());
+    @Test void requiresCareerAndAllowsSavingWithoutBuilding() throws Exception {
+        assertEquals(400,putProfile("{\"displayName\":\"Alumno\",\"degree\":\"\"}",true).statusCode());
+        assertEquals(200,putProfile("{\"displayName\":\"Alumno\",\"degree\":\"TI\"}",true).statusCode());
+        var profile=json.readTree(get("/auth/me").body());
+        assertEquals("Alumno",profile.get("displayName").asText());
+        assertTrue(profile.get("building").isNull());
     }
 
     @Test void studentNumberRecognizesOnlyStudentExampleFormat() throws Exception {

@@ -5283,8 +5283,9 @@
         "properties": {
           "email": {
             "type": "string",
-            "pattern": "^[aA][0-9]{10}@[uU][tT][cC][hH]\\.[eE][dD][uU]\\.[mM][xX]$",
-            "example": "a1234567890@utch.edu.mx"
+            "example": "a1234567890@utch.edu.mx",
+            "format": "email",
+            "description": "Correo del dominio utch.edu.mx. La matrícula se deriva del correo estudiantil cuando corresponde."
           },
           "password": {
             "type": "string",
@@ -5303,16 +5304,15 @@
           },
           "building": {
             "type": "string",
-            "minLength": 1,
-            "maxLength": 80
+            "maxLength": 80,
+            "nullable": true
           }
         },
         "required": [
           "email",
           "password",
           "displayName",
-          "degree",
-          "building"
+          "degree"
         ]
       },
       "ReportRequestDto": {
@@ -5544,14 +5544,13 @@
           },
           "building": {
             "type": "string",
-            "minLength": 1,
-            "maxLength": 80
+            "maxLength": 80,
+            "nullable": true
           }
         },
         "required": [
           "displayName",
-          "degree",
-          "building"
+          "degree"
         ],
         "additionalProperties": false
       },

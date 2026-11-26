@@ -8,12 +8,14 @@ import org.springframework.beans.factory.annotation.*;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.test.context.ActiveProfiles;
+import org.springframework.test.annotation.DirtiesContext;
 import tools.jackson.databind.ObjectMapper;
 import static org.junit.jupiter.api.Assertions.*;
 
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT,
         properties = "server.servlet.session.cookie.secure=false")
 @ActiveProfiles("test")
+@DirtiesContext(classMode = DirtiesContext.ClassMode.BEFORE_EACH_TEST_METHOD)
 class RegistrationControllerTest {
     @Value("${local.server.port}") int port;
     @Autowired JdbcTemplate db;
@@ -82,6 +84,15 @@ class RegistrationControllerTest {
         assertEquals("I",json.readTree(me.body()).get("building").asText());
         assertFalse(me.body().contains("passwordHash"));
     }
+    @Test void institutionalAccountWithoutMatriculaOrBuildingHasBaseAccess() throws Exception {
+        String email="docente.prueba@utch.edu.mx";
+        String form=registration().replace("a1234567890@utch.edu.mx",email).replace(",\"building\":\"I\"", "");
+        assertEquals(202,post("/register",form,true,false));
+        var user=db.queryForMap("SELECT role,building,degree FROM app_user WHERE email=?",email);
+        assertEquals("STUDENT",user.get("role"));
+        assertNull(user.get("building"));
+        assertEquals("Tecnologías de la Información",user.get("degree"));
+    }
     @Test void demoActivationIsUnavailableInNormalMode() throws Exception {
         var options=client.send(HttpRequest.newBuilder(URI.create(base()+"/registration-options")).GET().build(),HttpResponse.BodyHandlers.ofString());
         assertEquals(200,options.statusCode());
@@ -92,9 +103,7 @@ class RegistrationControllerTest {
         assertEquals(403,post("/register",registration(),false,false));
         assertEquals(400,post("/register",registration().replace("utch.edu.mx","gmail.com"),true,false));
         assertEquals(400,post("/register",registration().replace("clave-prueba-123","short"),true,false));
-        assertEquals(400,post("/register",registration().replace("a1234567890","alumno.demo"),true,false));
         assertEquals(400,post("/register",registration().replace("Tecnologías de la Información","   "),true,false));
-        assertEquals(400,post("/register",registration().replace("\"building\":\"I\"","\"building\":null"),true,false));
         assertEquals(400,post("/verify-email","{\"token\":\"invalid\"}",true,false));
         assertEquals(0L,db.queryForObject("SELECT count(*) FROM app_user",Long.class));
     }

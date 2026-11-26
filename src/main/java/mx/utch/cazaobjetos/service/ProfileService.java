@@ -21,7 +21,7 @@ public class ProfileService {
         require(name != null && name.length() >= 3, HttpStatus.BAD_REQUEST, "Escribe un nombre de al menos 3 caracteres");
         String degree=clean(request.degree());
         String building=clean(request.building());
-        require(degree!=null && building!=null,HttpStatus.BAD_REQUEST,"Carrera y edificio son obligatorios");
+        require(degree!=null,HttpStatus.BAD_REQUEST,"Escribe tu carrera o área");
         user.setDisplayName(name);
         user.setAlias(clean(request.alias()));
         user.setClassroom(clean(request.classroom()));

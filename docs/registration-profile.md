@@ -1,6 +1,6 @@
 # Registro de alumnos y datos académicos
 
-El registro público crea cuentas STUDENT con un correo de la forma `a` + 10 dígitos + `@utch.edu.mx`. El correo se guarda en minúsculas. La matrícula se obtiene de esos diez dígitos al consultar el perfil; no existe un campo editable ni se confía en una matrícula enviada por el cliente. Se conservan los ceros iniciales.
+El registro público admite correos del dominio `utch.edu.mx` y concede los permisos comunes de `STUDENT`. Si la dirección tiene la forma `a` + 10 dígitos + `@utch.edu.mx`, el perfil muestra los diez dígitos como matrícula y conserva los ceros iniciales. Las otras direcciones institucionales se registran sin matrícula.
 
 `POST /api/v1/auth/register` requiere:
 
@@ -9,12 +9,11 @@ El registro público crea cuentas STUDENT con un correo de la forma `a` + 10 dí
   "email": "a1234567890@utch.edu.mx",
   "displayName": "Alumno de prueba",
   "degree": "Tecnologías de la Información",
-  "building": "I",
   "password": "Una-clave-de-prueba-2026"
 }
 ```
 
-Carrera (máximo 160 caracteres) y edificio (máximo 80) son obligatorios, se guardan recortados y no admiten saltos de línea. `PUT /api/v1/auth/me` también requiere ambos campos, por lo que no pueden borrarse accidentalmente al editar el perfil. Los datos de las cuentas previas permanecen intactos; si están incompletos, el formulario solicita completarlos al guardar.
+Carrera o área es obligatoria (máximo 160 caracteres). Edificio es opcional (máximo 80). `PUT /api/v1/auth/me` aplica las mismas reglas. Los textos se guardan recortados y deben escribirse en una sola línea.
 
 En modo normal, la cuenta permanece deshabilitada hasta consumir el código de verificación. La extracción de matrícula reconoce el formato y no comprueba la inscripción del alumno.
 

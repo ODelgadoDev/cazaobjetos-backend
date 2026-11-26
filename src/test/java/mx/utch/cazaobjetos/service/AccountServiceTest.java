@@ -80,14 +80,10 @@ class AccountServiceTest {
         fails(400, () -> accounts.register(new RegisterRequestDto(EMAIL, "é".repeat(40), "Ana", " TI ", " I ")));
         assertEquals(0L, db.queryForObject("SELECT count(*) FROM app_user", Long.class));
     }
-    @Test void registrationRejectsMissingAcademicDataAndNonStudentEmailBeforeAnyWrite() {
-        for (String email:List.of("alumno.demo@utch.edu.mx","a123@utch.edu.mx","1234567890@utch.edu.mx"))
-            fails(400,()->accounts.register(new RegisterRequestDto(email,"clave-prueba-123","Ana","TI","I")));
-        for(String blank:Arrays.asList(null,"","   ")) {
-            fails(400,()->accounts.register(new RegisterRequestDto(EMAIL,"clave-prueba-123","Ana",blank,"I")));
-            fails(400,()->accounts.register(new RegisterRequestDto(EMAIL,"clave-prueba-123","Ana","TI",blank)));
-        }
-        fails(400,()->accounts.register(new RegisterRequestDto(EMAIL,"clave-prueba-123","Ana","línea\nextra","I")));
+    @Test void rejectsMissingCareerOrAreaBeforeAnyWrite() {
+        for(String blank:Arrays.asList(null,"","   "))
+            fails(400,()->accounts.register(new RegisterRequestDto(EMAIL,"clave-prueba-123","Ana",blank,null)));
+        fails(400,()->accounts.register(new RegisterRequestDto(EMAIL,"clave-prueba-123","Ana","línea\nextra",null)));
         assertEquals(0L,db.queryForObject("SELECT count(*) FROM app_user",Long.class));
         assertEquals(0L,db.queryForObject("SELECT count(*) FROM email_outbox",Long.class));
     }

@@ -58,10 +58,9 @@ public class AccountService {
 
     public void register(RegisterRequestDto request) {
         String email = normalize(request.email());
-        require(mx.utch.cazaobjetos.util.StudentNumberUtil.fromEmail(email,UserRole.STUDENT)!=null,
-                HttpStatus.BAD_REQUEST,"Usa un correo de alumno: a + 10 dígitos + @utch.edu.mx");
-        String degree=academicField(request.degree(),160,"carrera");
-        String building=academicField(request.building(),80,"edificio");
+        String degree=academicField(request.degree(),160,"carrera o área");
+        String building=request.building()==null || request.building().isBlank()
+                ? null : academicField(request.building(),80,"edificio");
         require(request.password().getBytes(StandardCharsets.UTF_8).length <= 72,
                 HttpStatus.BAD_REQUEST, "La contraseña no puede superar 72 bytes UTF-8");
         require(!users.existsByEmail(email), HttpStatus.CONFLICT, "Este correo ya está registrado. Inicia sesión o verifica tu cuenta.");
