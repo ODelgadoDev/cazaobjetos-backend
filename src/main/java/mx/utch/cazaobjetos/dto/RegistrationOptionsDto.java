@@ -1,3 +1,3 @@
 package mx.utch.cazaobjetos.dto;
 
-public record RegistrationOptionsDto(boolean demoVerification) {}
+public record RegistrationOptionsDto(boolean demoVerification, boolean openRegistration) {}

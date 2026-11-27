@@ -13,7 +13,7 @@ public class RegistrationController {
     public RegistrationController(AccountService accounts) { this.accounts = accounts; }
 
     @GetMapping("/registration-options")
-    public RegistrationOptionsDto options() { return new RegistrationOptionsDto(accounts.demoVerification()); }
+    public RegistrationOptionsDto options() { return new RegistrationOptionsDto(accounts.demoVerification(), accounts.openRegistration()); }
 
     @PostMapping("/verify-email/demo")
     public ResponseEntity<Void> verifyDemo(@Valid @RequestBody EmailRequestDto request) {

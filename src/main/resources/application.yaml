@@ -36,6 +36,8 @@ spring:
     time-zone: UTC
 
 app:
+  auth:
+    open-registration: ${OPEN_REGISTRATION:false}
   push:
     enabled: ${PUSH_ENABLED:true}
     worker-enabled: ${PUSH_WORKER_ENABLED:true}

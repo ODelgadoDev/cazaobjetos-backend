@@ -21,10 +21,12 @@ public class PasswordService {
     private final EmailOutboxRepository outbox;
     private final PasswordEncoder passwords;
     private final ItemEventService events;
-    public PasswordService(UserRepository users,PasswordResetRepository resets,EmailOutboxRepository outbox,PasswordEncoder passwords,ItemEventService events) {
-        this.users=users;this.resets=resets;this.outbox=outbox;this.passwords=passwords;this.events=events;
+    private final RegistrationMode registration;
+    public PasswordService(UserRepository users,PasswordResetRepository resets,EmailOutboxRepository outbox,PasswordEncoder passwords,ItemEventService events,RegistrationMode registration) {
+        this.users=users;this.resets=resets;this.outbox=outbox;this.passwords=passwords;this.events=events;this.registration=registration;
     }
     public void forgot(String email) {
+        if (registration.openRegistration()) return;
         UUID id=users.findIdByEmail(email.strip().toLowerCase(Locale.ROOT)).orElse(null);
         if(id==null) return;
         var user=users.findLockedById(id).orElseThrow();
@@ -50,6 +52,7 @@ public class PasswordService {
         events.audit(user.getId(),user.getId(),"PASSWORD_CHANGED");
     }
     public void reset(String token,String password) {
+        if (registration.openRegistration()) throw invalid();
         String hash=VerificationTokenUtil.hash(token);
         UUID id=resets.findUserIdByTokenHash(hash).orElseThrow(this::invalid);
         var user=users.findLockedById(id).orElseThrow(this::invalid);

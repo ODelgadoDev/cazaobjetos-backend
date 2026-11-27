@@ -9,6 +9,6 @@ WORKDIR /app
 COPY --from=build --chown=10001:10001 /build/target/cazaobjetos-0.1.0-SNAPSHOT.jar /app/app.jar
 RUN mkdir -p /app/.local && chown 10001:10001 /app/.local && chmod 700 /app/.local
 USER 10001:10001
-ENV SERVER_ADDRESS=0.0.0.0 SERVER_PORT=10000
+ENV SERVER_ADDRESS=0.0.0.0 SERVER_PORT=10000 OPEN_REGISTRATION=true
 EXPOSE 10000
 ENTRYPOINT ["java", "-jar", "/app/app.jar"]

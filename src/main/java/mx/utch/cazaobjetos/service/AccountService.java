@@ -1,5 +1,6 @@
 package mx.utch.cazaobjetos.service;
 
+import java.nio.charset.StandardCharsets;
 import java.time.*;
 import java.util.*;
 import org.springframework.http.HttpStatus;
@@ -34,6 +35,22 @@ public class AccountService {
     }
 
     public boolean demoVerification() { return mode.demoVerification(); }
+    public boolean openRegistration() { return mode.openRegistration(); }
+
+    public void activatePendingForLogin(String rawEmail, String password) {
+        if (!mode.openRegistration()) return;
+        if (rawEmail == null || password == null || password.getBytes(StandardCharsets.UTF_8).length > 72) return;
+        String email = rawEmail.strip().toLowerCase(Locale.ROOT);
+        UUID id = users.findPendingIdByEmail(email).orElse(null);
+        if (id == null) return;
+        UserModel user = users.findLockedById(id).orElse(null);
+        if (user == null || user.getEnabled() || user.getEmailVerifiedAt() != null) return;
+        var verification = verifications.findById(id).orElse(null);
+        if (verification == null || verification.getConsumedAt() != null) return;
+        if (!passwords.matches(password, user.getPasswordHash())) return;
+        user.setEnabled(true);
+        verification.setConsumedAt(Instant.now());
+    }
 
     public void verifyDemo(String rawEmail) {
         require(mode.demoVerification(),HttpStatus.NOT_FOUND,"Verificación de prueba no disponible");
@@ -62,7 +79,10 @@ public class AccountService {
         String building=request.building()==null || request.building().isBlank()
                 ? null : academicField(request.building(),80,"edificio");
         PasswordPolicy.validate(request.password());
-        require(!users.existsByEmail(email), HttpStatus.CONFLICT, "Este correo ya está registrado. Inicia sesión o verifica tu cuenta.");
+        boolean open = mode.openRegistration();
+        require(!users.existsByEmail(email), HttpStatus.CONFLICT, open
+                ? "Este correo ya está registrado. Inicia sesión."
+                : "Este correo ya está registrado. Inicia sesión o verifica tu cuenta.");
         UserModel user = new UserModel();
         user.setId(UUID.randomUUID());
         user.setEmail(email);
@@ -71,10 +91,10 @@ public class AccountService {
         user.setBuilding(building);
         user.setPasswordHash(passwords.encode(request.password()));
         user.setRole(UserRole.STUDENT); // Public registration cannot grant teacher/secretary privileges.
-        user.setEnabled(false);
+        user.setEnabled(open);
         user.setCreatedAt(Instant.now());
         users.saveAndFlush(user);
-        issue(user);
+        if (!open) issue(user);
     }
 
     private String academicField(String raw, int max, String label) {
@@ -86,6 +106,7 @@ public class AccountService {
     }
 
     public void resend(String rawEmail) {
+        if (mode.openRegistration()) return;
         String email = normalize(rawEmail);
         UUID id = users.findIdByEmail(email).orElse(null);
         if (id == null) return; // Same HTTP response for absent or already verified accounts.

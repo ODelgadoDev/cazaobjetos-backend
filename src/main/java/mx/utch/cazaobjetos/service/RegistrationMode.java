@@ -8,8 +8,15 @@ import org.springframework.stereotype.Component;
 @Component
 public class RegistrationMode {
     private final boolean demo;
-    public RegistrationMode(Environment environment, @Value("${app.auth.demo-verification:false}") boolean configured) {
-        demo=configured && environment.acceptsProfiles(Profiles.of("dev"));
+    private final boolean openRegistration;
+
+    public RegistrationMode(Environment environment,
+                            @Value("${app.auth.demo-verification:false}") boolean demoConfigured,
+                            @Value("${app.auth.open-registration:false}") boolean openRegistration) {
+        this.openRegistration = openRegistration;
+        demo = !openRegistration && demoConfigured && environment.acceptsProfiles(Profiles.of("dev"));
     }
+
     public boolean demoVerification() { return demo; }
+    public boolean openRegistration() { return openRegistration; }
 }

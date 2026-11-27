@@ -11,6 +11,11 @@ public interface UserRepository extends JpaRepository<UserModel, UUID>, org.spri
     Optional<UserModel> findByEmailAndEnabledTrue(String email);
     @org.springframework.data.jpa.repository.Query("select u.id from UserModel u where u.email=:email")
     Optional<UUID> findIdByEmail(@org.springframework.data.repository.query.Param("email") String email);
+    @org.springframework.data.jpa.repository.Query("""
+            select u.id from UserModel u
+            where u.email=:email and u.enabled=false and u.emailVerifiedAt is null
+            """)
+    Optional<UUID> findPendingIdByEmail(@org.springframework.data.repository.query.Param("email") String email);
     @org.springframework.data.jpa.repository.Lock(jakarta.persistence.LockModeType.PESSIMISTIC_WRITE)
     @org.springframework.data.jpa.repository.Query("select u from UserModel u where u.id=:id")
     Optional<UserModel> findLockedById(@org.springframework.data.repository.query.Param("id") UUID id);

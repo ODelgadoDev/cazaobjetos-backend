@@ -6562,12 +6562,17 @@
       "RegistrationOptionsDto": {
         "type": "object",
         "required": [
-          "demoVerification"
+          "demoVerification",
+          "openRegistration"
         ],
         "properties": {
           "demoVerification": {
             "type": "boolean",
             "description": "Solo verdadero con perfil dev y activación local explícita."
+          },
+          "openRegistration": {
+            "type": "boolean",
+            "description": "Las cuentas nuevas quedan habilitadas sin confirmar la propiedad del correo."
           }
         }
       }
