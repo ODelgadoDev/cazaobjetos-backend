@@ -1,0 +1,5 @@
+*
+!Dockerfile.render
+!pom.xml
+!src/
+!src/**
